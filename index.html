@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clash Verge 鑺傜偣閰嶇疆缂栬緫鍣?/title>
+  <title>Clash Verge 节点配置编辑器</title>
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
@@ -779,22 +779,22 @@
 <body>
 
   <div class="header">
-    <h1>Clash Verge 鑺傜偣閰嶇疆缂栬緫鍣?/h1>
-    <p>鍙鍖栫鐞嗕唬鐞嗚妭鐐瑰拰绛栫暐缁勶紝鏀寔绮樿创鍒嗕韩閾炬帴蹇€熸坊鍔?/p>
+    <h1>Clash Verge 节点配置编辑器</h1>
+    <p>可视化管理代理节点和策略组，支持粘贴分享链接快速添加</p>
   </div>
 
   <div class="container">
     <!-- Import Section -->
     <div class="section" id="importSection">
-      <div class="section-title"><i class="ph-bold ph-download-simple"></i> 瀵煎叆閰嶇疆</div>
-      <textarea id="importText" placeholder="绮樿创 YAML 閰嶇疆鍐呭..."></textarea>
+      <div class="section-title"><i class="ph-bold ph-download-simple"></i> 导入配置</div>
+      <textarea id="importText" placeholder="粘贴 YAML 配置内容..."></textarea>
       <div class="import-actions">
-        <button class="btn btn-primary" onclick="parseConfig()">瑙ｆ瀽閰嶇疆</button>
+        <button class="btn btn-primary" onclick="parseConfig()">解析配置</button>
         <label class="file-label">
-          馃搧 涓婁紶 YAML 鏂囦欢
+          📁 上传 YAML 文件
           <input type="file" accept=".yaml,.yml" onchange="loadFile(event)">
         </label>
-        <button class="btn btn-outline" onclick="startEmpty()">浠庨浂寮€濮?/button>
+        <button class="btn btn-outline" onclick="startEmpty()">从零开始</button>
       </div>
     </div>
 
@@ -803,12 +803,12 @@
 
       <!-- Link Paste Section -->
       <div class="section">
-        <div class="section-title"><i class="ph-bold ph-link"></i> 绮樿创閾炬帴娣诲姞鑺傜偣</div>
+        <div class="section-title"><i class="ph-bold ph-link"></i> 粘贴链接添加节点</div>
         <div class="link-area">
           <textarea id="linkInput"
-            placeholder="绮樿创鑺傜偣鍒嗕韩閾炬帴锛屾敮鎸佸琛屾壒閲忔坊鍔?#10;鏀寔 ss:// vmess:// vless:// trojan:// hysteria2:// hy2://"></textarea>
+            placeholder="粘贴节点分享链接，支持多行批量添加&#10;支持 ss:// vmess:// vless:// trojan:// hysteria2:// hy2://"></textarea>
           <div style="margin-top:10px">
-            <button class="btn btn-primary" onclick="parseLinks()">璇嗗埆骞舵坊鍔?/button>
+            <button class="btn btn-primary" onclick="parseLinks()">识别并添加</button>
           </div>
           <div class="link-results" id="linkResults"></div>
         </div>
@@ -816,58 +816,58 @@
 
       <!-- Airport Subscription Section -->
       <div class="section">
-        <div class="section-title"><i class="ph-bold ph-airplane-tilt"></i> 鏈哄満璁㈤槄绠＄悊</div>
+        <div class="section-title"><i class="ph-bold ph-airplane-tilt"></i> 机场订阅管理</div>
         <div class="airport-area">
-          <div style="font-size:.85em;color:var(--text2);margin-bottom:10px">娣诲姞鏈哄満璁㈤槄閾炬帴锛屽皢浣滀负 proxy-provider 寮曞叆閰嶇疆锛屽彲琚唬鐞嗙粍閫氳繃
-            use 寮曠敤</div>
+          <div style="font-size:.85em;color:var(--text2);margin-bottom:10px">添加机场订阅链接，将作为 proxy-provider 引入配置，可被代理组通过
+            use 引用</div>
           <div class="form-group" style="margin-bottom:0">
-            <input id="airportUrl" class="provider-url-input" placeholder="绮樿创鏈哄満璁㈤槄閾炬帴 (HTTP/HTTPS URL)">
+            <input id="airportUrl" class="provider-url-input" placeholder="粘贴机场订阅链接 (HTTP/HTTPS URL)">
           </div>
           <div class="airport-form-row">
             <div class="form-group">
-              <label>鍚嶇О</label>
-              <input id="airportName" placeholder="渚嬪: 鎴戠殑鏈哄満">
+              <label>名称</label>
+              <input id="airportName" placeholder="例如: 我的机场">
             </div>
             <div class="form-group">
-              <label>绫诲瀷</label>
+              <label>类型</label>
               <select id="airportType">
-                <option value="http">http (杩滅▼璁㈤槄)</option>
-                <option value="file">file (鏈湴鏂囦欢)</option>
+                <option value="http">http (远程订阅)</option>
+                <option value="file">file (本地文件)</option>
               </select>
             </div>
             <div class="form-group" style="flex:0 0 auto;min-width:auto;align-self:flex-end;padding-bottom:2px">
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap">
                 <input type="checkbox" id="airportAutoUpdate" checked style="width:auto;accent-color:var(--accent)"
-                  onchange="toggleAirportAutoUpdate()"> 鑷姩鏇存柊
+                  onchange="toggleAirportAutoUpdate()"> 自动更新
               </label>
             </div>
           </div>
           <div id="airportAutoUpdateFields">
             <div class="airport-form-row">
               <div class="form-group">
-                <label>鏇存柊闂撮殧 (绉?</label>
+                <label>更新间隔 (秒)</label>
                 <input id="airportInterval" type="number" value="86400" placeholder="86400">
               </div>
               <div class="form-group">
-                <label>鍋ュ悍妫€鏌?URL</label>
-                <input id="airportHealthUrl" value="http://www.gstatic.com/generate_204" placeholder="鍋ュ悍妫€鏌ュ湴鍧€">
+                <label>健康检查 URL</label>
+                <input id="airportHealthUrl" value="http://www.gstatic.com/generate_204" placeholder="健康检查地址">
               </div>
               <div class="form-group">
-                <label>妫€鏌ラ棿闅?(绉?</label>
+                <label>检查间隔 (秒)</label>
                 <input id="airportHealthInterval" type="number" value="300" placeholder="300">
               </div>
             </div>
           </div>
           <div style="margin-top:12px">
-            <div class="group-select-title">娣诲姞鍚庡姞鍏ヤ唬鐞嗙粍锛坲se 寮曠敤锛夛細</div>
+            <div class="group-select-title">添加后加入代理组（use 引用）：</div>
             <div class="group-checkboxes" id="airportGroupCheckboxes"></div>
           </div>
           <div style="margin-top:12px">
-            <button class="btn btn-primary" onclick="addAirport()">娣诲姞璁㈤槄</button>
+            <button class="btn btn-primary" onclick="addAirport()">添加订阅</button>
           </div>
         </div>
         <div style="margin-top:16px">
-          <div style="font-size:.9em;font-weight:600;margin-bottom:8px">宸叉湁璁㈤槄婧?(<span id="providerCount">0</span>)</div>
+          <div style="font-size:.9em;font-weight:600;margin-bottom:8px">已有订阅源 (<span id="providerCount">0</span>)</div>
           <div id="providerGrid" class="provider-grid"></div>
         </div>
       </div>
@@ -877,15 +877,15 @@
         <div>
           <div class="section">
             <div class="section-title" style="justify-content:space-between">
-              <span><i class="ph-bold ph-globe-hemisphere-west"></i> 浠ｇ悊鑺傜偣 (<span id="proxyCount">0</span>)</span>
-              <button class="btn btn-outline btn-small" onclick="showAddForm()">+ 鎵嬪姩娣诲姞</button>
+              <span><i class="ph-bold ph-globe-hemisphere-west"></i> 代理节点 (<span id="proxyCount">0</span>)</span>
+              <button class="btn btn-outline btn-small" onclick="showAddForm()">+ 手动添加</button>
             </div>
             <div id="proxyGrid" class="proxy-grid"></div>
           </div>
         </div>
         <div>
           <div class="section form-section" id="formSection" style="display:none">
-            <div class="section-title" id="formTitle">娣诲姞鑺傜偣</div>
+            <div class="section-title" id="formTitle">添加节点</div>
             <div id="formContainer"></div>
           </div>
         </div>
@@ -894,21 +894,21 @@
       <!-- Proxy Groups -->
       <div class="section">
         <div class="section-title" style="justify-content:space-between">
-          <span><i class="ph-bold ph-folder-notch"></i> 浠ｇ悊缁勭鐞?/span>
-          <button class="btn btn-outline btn-small" onclick="showCreateGroupDialog()">+ 鏂板缓浠ｇ悊缁?/button>
+          <span><i class="ph-bold ph-folder-notch"></i> 代理组管理</span>
+          <button class="btn btn-outline btn-small" onclick="showCreateGroupDialog()">+ 新建代理组</button>
         </div>
         <div id="proxyGroupsList"></div>
       </div>
 
       <!-- Export -->
       <div class="section">
-        <div class="section-title"><i class="ph-bold ph-export"></i> 瀵煎嚭閰嶇疆</div>
+        <div class="section-title"><i class="ph-bold ph-export"></i> 导出配置</div>
         <div class="btn-group">
-          <button class="btn btn-success" onclick="exportConfig()">瀵煎嚭 YAML 鏂囦欢</button>
-          <button class="btn btn-outline" onclick="togglePreview()">棰勮 YAML</button>
+          <button class="btn btn-success" onclick="exportConfig()">导出 YAML 文件</button>
+          <button class="btn btn-outline" onclick="togglePreview()">预览 YAML</button>
         </div>
         <div class="yaml-preview-wrap" id="yamlPreviewWrap">
-          <button class="copy-btn" onclick="copyYaml()">澶嶅埗</button>
+          <button class="copy-btn" onclick="copyYaml()">复制</button>
           <pre class="yaml-preview" id="yamlPreview"></pre>
         </div>
       </div>
@@ -946,8 +946,8 @@
       <h3>${title}</h3>
       <p>${message}</p>
       <div class="btn-group">
-        <button class="btn btn-outline" onclick="closeModal()">鍙栨秷</button>
-        <button class="btn btn-danger" id="modalConfirmBtn">纭</button>
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-danger" id="modalConfirmBtn">确认</button>
       </div>
     </div>
   </div>`;
@@ -966,18 +966,18 @@
 
     function parseConfig() {
       const text = document.getElementById('importText').value.trim();
-      if (!text) { toast('璇峰厛绮樿创鎴栦笂浼犻厤缃唴瀹?, 'error'); return; }
+      if (!text) { toast('请先粘贴或上传配置内容', 'error'); return; }
       try {
         const doc = jsyaml.load(text);
-        if (!doc || typeof doc !== 'object') throw new Error('鏃犳晥鐨?YAML');
+        if (!doc || typeof doc !== 'object') throw new Error('无效的 YAML');
         AppState.rawConfig = doc;
         AppState.proxies = Array.isArray(doc.proxies) ? doc.proxies : [];
         AppState.proxyGroups = Array.isArray(doc['proxy-groups']) ? doc['proxy-groups'] : [];
         AppState.proxyProviders = doc['proxy-providers'] || {};
-        toast('閰嶇疆瑙ｆ瀽鎴愬姛锛?);
+        toast('配置解析成功！');
         showEditor();
       } catch (e) {
-        toast('瑙ｆ瀽澶辫触: ' + e.message, 'error');
+        toast('解析失败: ' + e.message, 'error');
       }
     }
 
@@ -986,7 +986,7 @@
       AppState.proxies = [];
       AppState.proxyGroups = [];
       AppState.proxyProviders = {};
-      toast('宸插垱寤虹┖閰嶇疆', 'info');
+      toast('已创建空配置', 'info');
       showEditor();
     }
 
@@ -1020,7 +1020,7 @@
         const normalized = link.replace(/^hy2:\/\//, 'hysteria2://');
         const url = new URL(normalized);
         const params = url.searchParams;
-        const node = { type: 'hysteria2', name: decodeURIComponent(url.hash.slice(1)) || 'Hysteria2鑺傜偣', server: url.hostname, port: parseInt(url.port) || 443, password: decodeURIComponent(url.username) };
+        const node = { type: 'hysteria2', name: decodeURIComponent(url.hash.slice(1)) || 'Hysteria2节点', server: url.hostname, port: parseInt(url.port) || 443, password: decodeURIComponent(url.username) };
         if (params.get('sni')) node.sni = params.get('sni');
         if (params.get('insecure') === '1') node['skip-cert-verify'] = true;
         if (params.get('obfs')) node.obfs = params.get('obfs');
@@ -1033,7 +1033,7 @@
       try {
         const url = new URL(link);
         const params = url.searchParams;
-        const node = { type: 'vless', name: decodeURIComponent(url.hash.slice(1)) || 'VLESS鑺傜偣', server: url.hostname, port: parseInt(url.port) || 443, uuid: decodeURIComponent(url.username), udp: true };
+        const node = { type: 'vless', name: decodeURIComponent(url.hash.slice(1)) || 'VLESS节点', server: url.hostname, port: parseInt(url.port) || 443, uuid: decodeURIComponent(url.username), udp: true };
         const security = params.get('security') || 'none';
         if (security === 'tls' || security === 'reality') node.tls = true;
         if (params.get('sni')) node.servername = params.get('sni');
@@ -1065,7 +1065,7 @@
         const b64 = link.replace('vmess://', '');
         const decoded = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
         const json = JSON.parse(decoded);
-        const node = { type: 'vmess', name: json.ps || 'VMess鑺傜偣', server: json.add, port: parseInt(json.port), uuid: json.id, alterId: parseInt(json.aid) || 0, cipher: json.scy || 'auto' };
+        const node = { type: 'vmess', name: json.ps || 'VMess节点', server: json.add, port: parseInt(json.port), uuid: json.id, alterId: parseInt(json.aid) || 0, cipher: json.scy || 'auto' };
         if (json.net && json.net !== 'tcp') node.network = json.net;
         if (json.tls === 'tls') { node.tls = true; if (json.sni) node.servername = json.sni; }
         if (json['skip-cert-verify']) node['skip-cert-verify'] = true;
@@ -1083,7 +1083,7 @@
       try {
         const url = new URL(link);
         const params = url.searchParams;
-        const node = { type: 'trojan', name: decodeURIComponent(url.hash.slice(1)) || 'Trojan鑺傜偣', server: url.hostname, port: parseInt(url.port) || 443, password: decodeURIComponent(url.username) };
+        const node = { type: 'trojan', name: decodeURIComponent(url.hash.slice(1)) || 'Trojan节点', server: url.hostname, port: parseInt(url.port) || 443, password: decodeURIComponent(url.username) };
         if (params.get('sni')) node.sni = params.get('sni');
         if (params.get('insecure') === '1' || params.get('allowInsecure') === '1') node['skip-cert-verify'] = true;
         const netType = params.get('type') || 'tcp';
@@ -1130,14 +1130,14 @@
           server = hostport.slice(0, lastColon);
           port = parseInt(hostport.slice(lastColon + 1));
         }
-        return { type: 'ss', name: name || 'SS鑺傜偣', server, port, cipher: method, password };
+        return { type: 'ss', name: name || 'SS节点', server, port, cipher: method, password };
       } catch (e) { return null; }
     }
 
     // ========== Link Parsing UI ==========
     function parseLinks() {
       const text = document.getElementById('linkInput').value.trim();
-      if (!text) { toast('璇峰厛绮樿创鑺傜偣閾炬帴', 'error'); return; }
+      if (!text) { toast('请先粘贴节点链接', 'error'); return; }
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
       const results = [];
       lines.forEach((line, i) => {
@@ -1150,10 +1150,10 @@
     function renderLinkResults(results) {
       const container = document.getElementById('linkResults');
       if (!results.length) { container.innerHTML = ''; return; }
-      let html = '<div style="margin-bottom:12px;font-size:.9em;color:var(--text2)">璇嗗埆鍒?' + results.filter(r => r.node).length + ' / ' + results.length + ' 涓妭鐐?/div>';
+      let html = '<div style="margin-bottom:12px;font-size:.9em;color:var(--text2)">识别到 ' + results.filter(r => r.node).length + ' / ' + results.length + ' 个节点</div>';
       results.forEach((r, idx) => {
         if (!r.node) {
-          html += `<div class="link-card error"><div class="link-card-header"><span class="badge badge-error">澶辫触</span><span style="font-size:.85em;color:var(--danger)">鏃犳硶璇嗗埆: ${escHtml(r.line.substring(0, 60))}...</span></div></div>`;
+          html += `<div class="link-card error"><div class="link-card-header"><span class="badge badge-error">失败</span><span style="font-size:.85em;color:var(--danger)">无法识别: ${escHtml(r.line.substring(0, 60))}...</span></div></div>`;
           return;
         }
         const n = r.node;
@@ -1164,25 +1164,25 @@
         <strong>${escHtml(n.name)}</strong>
       </div>
       <div class="link-card-info">
-        <span>鏈嶅姟鍣? ${escHtml(n.server)}</span>
-        <span>绔彛: ${n.port}</span>
+        <span>服务器: ${escHtml(n.server)}</span>
+        <span>端口: ${n.port}</span>
       </div>
       <div class="group-select">
-        <div class="group-select-title">鍔犲叆鐜版湁鍒嗙粍锛?/div>
+        <div class="group-select-title">加入现有分组：</div>
         <div class="group-checkboxes">`;
         AppState.proxyGroups.forEach((g, gi) => {
           html += `<label><input type="checkbox" class="link-group-cb" data-result="${idx}" data-group="${gi}"> ${escHtml(g.name)}</label>`;
         });
-        if (!AppState.proxyGroups.length) html += '<span style="color:var(--text2);font-size:.85em">鏆傛棤浠ｇ悊缁?/span>';
+        if (!AppState.proxyGroups.length) html += '<span style="color:var(--text2);font-size:.85em">暂无代理组</span>';
         html += `</div>
-        <button class="new-group-toggle" onclick="toggleNewGroupInLink(${idx})">+ 鏂板缓鍒嗙粍骞跺姞鍏?/button>
+        <button class="new-group-toggle" onclick="toggleNewGroupInLink(${idx})">+ 新建分组并加入</button>
         <div class="new-group-form hidden" id="newGroupForm_${idx}">
           <div class="form-row">
-            <input placeholder="缁勫悕" id="newGroupName_${idx}">
+            <input placeholder="组名" id="newGroupName_${idx}">
             <select id="newGroupType_${idx}"><option value="select">select</option><option value="url-test">url-test</option><option value="fallback">fallback</option><option value="load-balance">load-balance</option></select>
           </div>
           <div class="form-row">
-            <select id="newGroupParent_${idx}"><option value="">涓嶅祵濂?/option>`;
+            <select id="newGroupParent_${idx}"><option value="">不嵌套</option>`;
         AppState.proxyGroups.forEach((g, gi) => { html += `<option value="${gi}">${escHtml(g.name)}</option>`; });
         html += `</select>
           </div>
@@ -1190,7 +1190,7 @@
       </div>
     </div>`;
       });
-      html += `<div style="margin-top:16px"><button class="btn btn-success" onclick="confirmAddLinks()">纭娣诲姞</button></div>`;
+      html += `<div style="margin-top:16px"><button class="btn btn-success" onclick="confirmAddLinks()">确认添加</button></div>`;
       container.innerHTML = html;
       // Store results for later
       container._results = results;
@@ -1245,12 +1245,12 @@
         }
       });
       if (addedCount) {
-        toast(`鎴愬姛娣诲姞 ${addedCount} 涓妭鐐筦);
+        toast(`成功添加 ${addedCount} 个节点`);
         document.getElementById('linkInput').value = '';
         container.innerHTML = '';
         renderAll();
       } else {
-        toast('娌℃湁鍙坊鍔犵殑鑺傜偣', 'error');
+        toast('没有可添加的节点', 'error');
       }
     }
 
@@ -1259,20 +1259,20 @@
       const grid = document.getElementById('proxyGrid');
       document.getElementById('proxyCount').textContent = AppState.proxies.length;
       if (!AppState.proxies.length) {
-        grid.innerHTML = '<div class="empty-state"><p>鏆傛棤浠ｇ悊鑺傜偣</p><p>鍙互閫氳繃涓婃柟绮樿创閾炬帴鎴栨墜鍔ㄦ坊鍔?/p></div>';
+        grid.innerHTML = '<div class="empty-state"><p>暂无代理节点</p><p>可以通过上方粘贴链接或手动添加</p></div>';
         return;
       }
       grid.innerHTML = AppState.proxies.map((p, i) => {
         const t = p.type || 'unknown';
         return `<div class="proxy-card" data-type="${t}">
       <div class="proxy-card-name">
-        <span>${escHtml(p.name || '鏈懡鍚?)}</span>
+        <span>${escHtml(p.name || '未命名')}</span>
         <span class="badge badge-${t === 'hy2' ? 'hysteria2' : t}">${t}</span>
       </div>
       <div class="proxy-card-detail">${escHtml(p.server || '')}:${p.port || ''}</div>
       <div class="proxy-card-actions">
-        <button class="btn btn-outline btn-small" onclick="editProxy(${i})">缂栬緫</button>
-        <button class="btn btn-danger btn-small" onclick="deleteProxy(${i})">鍒犻櫎</button>
+        <button class="btn btn-outline btn-small" onclick="editProxy(${i})">编辑</button>
+        <button class="btn btn-danger btn-small" onclick="deleteProxy(${i})">删除</button>
       </div>
     </div>`;
       }).join('');
@@ -1281,7 +1281,7 @@
     // ========== Add / Edit Form ==========
     function showAddForm() {
       AppState.editingIndex = -1;
-      document.getElementById('formTitle').textContent = '娣诲姞鑺傜偣';
+      document.getElementById('formTitle').textContent = '添加节点';
       document.getElementById('formSection').style.display = '';
       buildForm('hysteria2');
     }
@@ -1289,7 +1289,7 @@
     function editProxy(idx) {
       AppState.editingIndex = idx;
       const p = AppState.proxies[idx];
-      document.getElementById('formTitle').textContent = '缂栬緫鑺傜偣';
+      document.getElementById('formTitle').textContent = '编辑节点';
       document.getElementById('formSection').style.display = '';
       buildForm(p.type, p);
     }
@@ -1300,15 +1300,15 @@
       const typeOptions = ['ss', 'vmess', 'trojan', 'hysteria2', 'vless'].map(t =>
         `<option value="${t}" ${type === t ? 'selected' : ''}>${t}</option>`).join('');
 
-      let html = `<div class="form-group"><label class="required">浠ｇ悊绫诲瀷</label><select id="f_type" onchange="buildForm(this.value, null)">${typeOptions}</select></div>`;
-      html += `<div class="form-group"><label class="required">鍚嶇О</label><input id="f_name" value="${escAttr(d.name || '')}"></div>`;
-      html += `<div class="form-group"><label class="required">鏈嶅姟鍣?/label><input id="f_server" value="${escAttr(d.server || '')}"></div>`;
-      html += `<div class="form-group"><label class="required">绔彛</label><input id="f_port" type="number" value="${d.port || ''}"></div>`;
+      let html = `<div class="form-group"><label class="required">代理类型</label><select id="f_type" onchange="buildForm(this.value, null)">${typeOptions}</select></div>`;
+      html += `<div class="form-group"><label class="required">名称</label><input id="f_name" value="${escAttr(d.name || '')}"></div>`;
+      html += `<div class="form-group"><label class="required">服务器</label><input id="f_server" value="${escAttr(d.server || '')}"></div>`;
+      html += `<div class="form-group"><label class="required">端口</label><input id="f_port" type="number" value="${d.port || ''}"></div>`;
 
       if (type === 'ss') {
         const ciphers = ['aes-128-gcm', 'aes-256-gcm', 'chacha20-ietf-poly1305', '2022-blake3-aes-128-gcm', '2022-blake3-aes-256-gcm', '2022-blake3-chacha20-poly1305'];
-        html += `<div class="form-group"><label class="required">鍔犲瘑鏂瑰紡</label><select id="f_cipher">${ciphers.map(c => `<option ${d.cipher === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>`;
-        html += `<div class="form-group"><label class="required">瀵嗙爜</label><input id="f_password" value="${escAttr(d.password || '')}"></div>`;
+        html += `<div class="form-group"><label class="required">加密方式</label><select id="f_cipher">${ciphers.map(c => `<option ${d.cipher === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>`;
+        html += `<div class="form-group"><label class="required">密码</label><input id="f_password" value="${escAttr(d.password || '')}"></div>`;
         html += advancedStart();
         html += checkboxField('f_udp', 'UDP', d.udp);
         html += advancedEnd();
@@ -1318,32 +1318,32 @@
         html += `<div class="form-group"><label class="required">UUID</label><input id="f_uuid" value="${escAttr(d.uuid || '')}"></div>`;
         html += `<div class="form-group"><label>alterId</label><input id="f_alterId" type="number" value="${d.alterId || 0}"></div>`;
         const vmCiphers = ['auto', 'aes-128-gcm', 'chacha20-poly1305', 'none'];
-        html += `<div class="form-group"><label>鍔犲瘑鏂瑰紡</label><select id="f_cipher">${vmCiphers.map(c => `<option ${d.cipher === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>`;
+        html += `<div class="form-group"><label>加密方式</label><select id="f_cipher">${vmCiphers.map(c => `<option ${d.cipher === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>`;
         html += advancedStart();
         html += checkboxField('f_tls', 'TLS', d.tls);
-        html += checkboxField('f_skip_cert', '璺宠繃璇佷功楠岃瘉', d['skip-cert-verify']);
+        html += checkboxField('f_skip_cert', '跳过证书验证', d['skip-cert-verify']);
         html += `<div class="form-group"><label>servername (SNI)</label><input id="f_servername" value="${escAttr(d.servername || '')}"></div>`;
         html += networkFields(d);
         html += advancedEnd();
       }
 
       if (type === 'trojan') {
-        html += `<div class="form-group"><label class="required">瀵嗙爜</label><input id="f_password" value="${escAttr(d.password || '')}"></div>`;
+        html += `<div class="form-group"><label class="required">密码</label><input id="f_password" value="${escAttr(d.password || '')}"></div>`;
         html += advancedStart();
         html += `<div class="form-group"><label>SNI</label><input id="f_sni" value="${escAttr(d.sni || '')}"></div>`;
-        html += checkboxField('f_skip_cert', '璺宠繃璇佷功楠岃瘉', d['skip-cert-verify']);
+        html += checkboxField('f_skip_cert', '跳过证书验证', d['skip-cert-verify']);
         html += networkFields(d);
         html += advancedEnd();
       }
 
       if (type === 'hysteria2') {
-        html += `<div class="form-group"><label class="required">瀵嗙爜</label><input id="f_password" value="${escAttr(d.password || '')}"></div>`;
+        html += `<div class="form-group"><label class="required">密码</label><input id="f_password" value="${escAttr(d.password || '')}"></div>`;
         html += advancedStart();
         html += `<div class="form-group"><label>SNI</label><input id="f_sni" value="${escAttr(d.sni || '')}"></div>`;
-        html += checkboxField('f_skip_cert', '璺宠繃璇佷功楠岃瘉', d['skip-cert-verify']);
+        html += checkboxField('f_skip_cert', '跳过证书验证', d['skip-cert-verify']);
         html += checkboxField('f_udp', 'UDP', d.udp);
-        html += `<div class="form-group"><label>涓婅甯﹀ (up)</label><input id="f_up" value="${escAttr(d.up || '')}"></div>`;
-        html += `<div class="form-group"><label>涓嬭甯﹀ (down)</label><input id="f_down" value="${escAttr(d.down || '')}"></div>`;
+        html += `<div class="form-group"><label>上行带宽 (up)</label><input id="f_up" value="${escAttr(d.up || '')}"></div>`;
+        html += `<div class="form-group"><label>下行带宽 (down)</label><input id="f_down" value="${escAttr(d.down || '')}"></div>`;
         html += `<div class="form-group"><label>obfs</label><input id="f_obfs" value="${escAttr(d.obfs || '')}"></div>`;
         html += `<div class="form-group"><label>obfs-password</label><input id="f_obfs_password" value="${escAttr(d['obfs-password'] || '')}"></div>`;
         html += advancedEnd();
@@ -1353,11 +1353,11 @@
         html += `<div class="form-group"><label class="required">UUID</label><input id="f_uuid" value="${escAttr(d.uuid || '')}"></div>`;
         html += advancedStart();
         const flows = ['', 'xtls-rprx-vision', 'xtls-rprx-direct'];
-        html += `<div class="form-group"><label>Flow</label><select id="f_flow">${flows.map(f => `<option value="${f}" ${d.flow === f ? 'selected' : ''}>${f || '鏃?}</option>`).join('')}</select></div>`;
+        html += `<div class="form-group"><label>Flow</label><select id="f_flow">${flows.map(f => `<option value="${f}" ${d.flow === f ? 'selected' : ''}>${f || '无'}</option>`).join('')}</select></div>`;
         html += checkboxField('f_tls', 'TLS', d.tls);
         html += `<div class="form-group"><label>servername (SNI)</label><input id="f_servername" value="${escAttr(d.servername || '')}"></div>`;
         const fps = ['', 'chrome', 'firefox', 'safari', 'ios', 'android', 'edge', '360', 'qq', 'random', 'randomized'];
-        html += `<div class="form-group"><label>client-fingerprint</label><select id="f_fp">${fps.map(f => `<option value="${f}" ${d['client-fingerprint'] === f ? 'selected' : ''}>${f || '榛樿'}</option>`).join('')}</select></div>`;
+        html += `<div class="form-group"><label>client-fingerprint</label><select id="f_fp">${fps.map(f => `<option value="${f}" ${d['client-fingerprint'] === f ? 'selected' : ''}>${f || '默认'}</option>`).join('')}</select></div>`;
         html += checkboxField('f_udp', 'UDP', d.udp !== false);
         html += networkFields(d);
         html += `<div class="form-group"><label>Reality public-key</label><input id="f_reality_pk" value="${escAttr((d['reality-opts'] || {})['public-key'] || '')}"></div>`;
@@ -1367,7 +1367,7 @@
 
       // Group selection for save
       html += `<div class="form-group-select">
-    <div style="font-size:.85em;font-weight:600;margin-bottom:8px;color:var(--text2)">淇濆瓨鍚庡姞鍏ュ垎缁勶紙鍙€夛級锛?/div>
+    <div style="font-size:.85em;font-weight:600;margin-bottom:8px;color:var(--text2)">保存后加入分组（可选）：</div>
     <div class="group-checkboxes">`;
       AppState.proxyGroups.forEach((g, gi) => {
         const checked = isEdit && g.proxies && g.proxies.includes(d.name) ? 'checked' : '';
@@ -1375,15 +1375,15 @@
       });
       html += `</div></div>`;
       html += `<div style="margin-top:16px" class="btn-group">
-    <button class="btn btn-primary" onclick="saveProxy()">淇濆瓨</button>
-    <button class="btn btn-outline" onclick="cancelForm()">鍙栨秷</button>
+    <button class="btn btn-primary" onclick="saveProxy()">保存</button>
+    <button class="btn btn-outline" onclick="cancelForm()">取消</button>
   </div>`;
 
       document.getElementById('formContainer').innerHTML = html;
     }
 
     function advancedStart() {
-      return `<button class="advanced-toggle" onclick="this.nextElementSibling.classList.toggle('show');this.textContent=this.nextElementSibling.classList.contains('show')?'鈻?鏀惰捣楂樼骇閫夐」':'鈻?楂樼骇閫夐」'">鈻?楂樼骇閫夐」</button><div class="advanced-fields">`;
+      return `<button class="advanced-toggle" onclick="this.nextElementSibling.classList.toggle('show');this.textContent=this.nextElementSibling.classList.contains('show')?'▼ 收起高级选项':'▶ 高级选项'">▶ 高级选项</button><div class="advanced-fields">`;
     }
     function advancedEnd() { return '</div>'; }
 
@@ -1394,7 +1394,7 @@
     function networkFields(d) {
       const nets = ['tcp', 'ws', 'grpc', 'h2'];
       const curNet = d.network || 'tcp';
-      let html = `<div class="form-group"><label>浼犺緭鏂瑰紡</label><select id="f_network">${nets.map(n => `<option value="${n}" ${curNet === n ? 'selected' : ''}>${n}</option>`).join('')}</select></div>`;
+      let html = `<div class="form-group"><label>传输方式</label><select id="f_network">${nets.map(n => `<option value="${n}" ${curNet === n ? 'selected' : ''}>${n}</option>`).join('')}</select></div>`;
       html += `<div class="form-group"><label>ws-opts path</label><input id="f_ws_path" value="${escAttr((d['ws-opts'] || {}).path || '')}"></div>`;
       html += `<div class="form-group"><label>ws-opts host</label><input id="f_ws_host" value="${escAttr(((d['ws-opts'] || {}).headers || {}).Host || '')}"></div>`;
       return html;
@@ -1410,7 +1410,7 @@
       const name = val('f_name');
       const server = val('f_server');
       const port = intVal('f_port');
-      if (!name || !server || !port) { toast('璇峰～鍐欏悕绉般€佹湇鍔″櫒鍜岀鍙?, 'error'); return; }
+      if (!name || !server || !port) { toast('请填写名称、服务器和端口', 'error'); return; }
 
       const node = { type, name, server, port };
       const isEdit = AppState.editingIndex >= 0;
@@ -1497,7 +1497,7 @@
         }
       });
 
-      toast(isEdit ? '鑺傜偣宸叉洿鏂? : '鑺傜偣宸叉坊鍔?);
+      toast(isEdit ? '节点已更新' : '节点已添加');
       cancelForm();
       renderAll();
     }
@@ -1514,14 +1514,14 @@
 
     function deleteProxy(idx) {
       const name = AppState.proxies[idx].name;
-      showModal('鍒犻櫎鑺傜偣', `纭畾瑕佸垹闄よ妭鐐?"${escHtml(name)}" 鍚楋紵灏嗗悓鏃朵粠鎵€鏈変唬鐞嗙粍涓Щ闄ゃ€俙, () => {
+      showModal('删除节点', `确定要删除节点 "${escHtml(name)}" 吗？将同时从所有代理组中移除。`, () => {
         AppState.proxies.splice(idx, 1);
         AppState.proxyGroups.forEach(g => {
           if (g.proxies) g.proxies = g.proxies.filter(n => n !== name);
         });
         if (AppState.editingIndex === idx) cancelForm();
         else if (AppState.editingIndex > idx) AppState.editingIndex--;
-        toast('鑺傜偣宸插垹闄?);
+        toast('节点已删除');
         renderAll();
       });
     }
@@ -1530,7 +1530,7 @@
     function renderProxyGroups() {
       const list = document.getElementById('proxyGroupsList');
       if (!AppState.proxyGroups.length) {
-        list.innerHTML = '<div class="empty-state"><p>鏆傛棤浠ｇ悊缁?/p></div>';
+        list.innerHTML = '<div class="empty-state"><p>暂无代理组</p></div>';
         return;
       }
       const allNames = AppState.proxies.map(p => p.name);
@@ -1545,36 +1545,36 @@
           const isGrp = groupNames.includes(m);
           return `<span class="member-tag ${isGrp ? 'is-group' : ''}">
         ${escHtml(m)}
-        <button class="remove-member" onclick="removeMember(${gi},'${escAttr(m)}')" title="绉婚櫎">&times;</button>
+        <button class="remove-member" onclick="removeMember(${gi},'${escAttr(m)}')" title="移除">&times;</button>
       </span>`;
         }).join('');
         // Show use (providers) as read-only tags
         membersHtml += useProviders.map(u =>
           `<span class="member-tag is-provider">${escHtml(u)} (provider)</span>`).join('');
-        if (!members.length && !useProviders.length) membersHtml = '<span style="color:var(--text2);font-size:.85em">鏃犳垚鍛?/span>';
+        if (!members.length && !useProviders.length) membersHtml = '<span style="color:var(--text2);font-size:.85em">无成员</span>';
 
         // Build options for add-member dropdown
-        let options = '<option value="">閫夋嫨娣诲姞...</option>';
+        let options = '<option value="">选择添加...</option>';
         allNames.forEach(n => {
-          if (!members.includes(n)) options += `<option value="proxy:${escAttr(n)}">[鑺傜偣] ${escHtml(n)}</option>`;
+          if (!members.includes(n)) options += `<option value="proxy:${escAttr(n)}">[节点] ${escHtml(n)}</option>`;
         });
         groupNames.forEach((n, i) => {
-          if (i !== gi && !members.includes(n)) options += `<option value="group:${escAttr(n)}">[鍒嗙粍] ${escHtml(n)}</option>`;
+          if (i !== gi && !members.includes(n)) options += `<option value="group:${escAttr(n)}">[分组] ${escHtml(n)}</option>`;
         });
 
         return `<div class="group-item">
       <div class="group-header" onclick="toggleGroup(${gi})">
-        <span class="arrow" id="arrow_${gi}">鈻?/span>
+        <span class="arrow" id="arrow_${gi}">▶</span>
         <span class="group-name">${escHtml(g.name)}</span>
         <span class="group-type-badge">${g.type}</span>
-        <span style="font-size:.8em;color:var(--text2)">${members.length} 涓垚鍛?/span>
-        <button class="btn btn-danger btn-small" onclick="event.stopPropagation();deleteGroup(${gi})" style="margin-left:auto">鍒犻櫎缁?/button>
+        <span style="font-size:.8em;color:var(--text2)">${members.length} 个成员</span>
+        <button class="btn btn-danger btn-small" onclick="event.stopPropagation();deleteGroup(${gi})" style="margin-left:auto">删除组</button>
       </div>
       <div class="group-body" id="groupBody_${gi}">
         <div class="group-members">${membersHtml}</div>
         <div class="add-member-row">
           <select id="addMemberSelect_${gi}">${options}</select>
-          <button class="btn btn-outline btn-small" onclick="addMember(${gi})">娣诲姞</button>
+          <button class="btn btn-outline btn-small" onclick="addMember(${gi})">添加</button>
         </div>
       </div>
     </div>`;
@@ -1614,33 +1614,33 @@
 
     function deleteGroup(gi) {
       const name = AppState.proxyGroups[gi].name;
-      showModal('鍒犻櫎浠ｇ悊缁?, `纭畾瑕佸垹闄や唬鐞嗙粍 "${escHtml(name)}" 鍚楋紵灏嗕粠鍏朵粬缁勪腑绉婚櫎瀵瑰畠鐨勫紩鐢ㄣ€俙, () => {
+      showModal('删除代理组', `确定要删除代理组 "${escHtml(name)}" 吗？将从其他组中移除对它的引用。`, () => {
         AppState.proxyGroups.splice(gi, 1);
         // Clean references
         AppState.proxyGroups.forEach(g => {
           if (g.proxies) g.proxies = g.proxies.filter(n => n !== name);
         });
-        toast('浠ｇ悊缁勫凡鍒犻櫎');
+        toast('代理组已删除');
         renderProxyGroups();
       });
     }
 
     function showCreateGroupDialog() {
       const c = document.getElementById('modalContainer');
-      let parentOpts = '<option value="">涓嶅祵濂?/option>';
+      let parentOpts = '<option value="">不嵌套</option>';
       AppState.proxyGroups.forEach((g, i) => { parentOpts += `<option value="${i}">${escHtml(g.name)}</option>`; });
       c.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
     <div class="modal">
-      <h3>鏂板缓浠ｇ悊缁?/h3>
-      <div class="form-group"><label class="required">缁勫悕</label><input id="cg_name"></div>
-      <div class="form-group"><label>绫诲瀷</label><select id="cg_type">
+      <h3>新建代理组</h3>
+      <div class="form-group"><label class="required">组名</label><input id="cg_name"></div>
+      <div class="form-group"><label>类型</label><select id="cg_type">
         <option value="select">select</option><option value="url-test">url-test</option>
         <option value="fallback">fallback</option><option value="load-balance">load-balance</option>
       </select></div>
-      <div class="form-group"><label>宓屽鍒扮埗缁?/label><select id="cg_parent">${parentOpts}</select></div>
+      <div class="form-group"><label>嵌套到父组</label><select id="cg_parent">${parentOpts}</select></div>
       <div class="btn-group" style="margin-top:16px">
-        <button class="btn btn-outline" onclick="closeModal()">鍙栨秷</button>
-        <button class="btn btn-primary" onclick="createGroupFromDialog()">鍒涘缓</button>
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="createGroupFromDialog()">创建</button>
       </div>
     </div>
   </div>`;
@@ -1648,8 +1648,8 @@
 
     function createGroupFromDialog() {
       const name = document.getElementById('cg_name').value.trim();
-      if (!name) { toast('璇疯緭鍏ョ粍鍚?, 'error'); return; }
-      if (AppState.proxyGroups.some(g => g.name === name)) { toast('缁勫悕宸插瓨鍦?, 'error'); return; }
+      if (!name) { toast('请输入组名', 'error'); return; }
+      if (AppState.proxyGroups.some(g => g.name === name)) { toast('组名已存在', 'error'); return; }
       const type = document.getElementById('cg_type').value;
       const parentVal = document.getElementById('cg_parent').value;
       const newGroup = { name, type, proxies: [] };
@@ -1666,7 +1666,7 @@
         }
       }
       closeModal();
-      toast('浠ｇ悊缁勫凡鍒涘缓');
+      toast('代理组已创建');
       renderProxyGroups();
     }
 
@@ -1682,7 +1682,7 @@
       const container = document.getElementById('airportGroupCheckboxes');
       if (!container) return;
       if (!AppState.proxyGroups.length) {
-        container.innerHTML = '<span style="color:var(--text2);font-size:.85em">鏆傛棤浠ｇ悊缁?/span>';
+        container.innerHTML = '<span style="color:var(--text2);font-size:.85em">暂无代理组</span>';
         return;
       }
       container.innerHTML = AppState.proxyGroups.map((g, gi) =>
@@ -1697,7 +1697,7 @@
       const names = Object.keys(AppState.proxyProviders);
       countEl.textContent = names.length;
       if (!names.length) {
-        grid.innerHTML = '<div class="empty-state"><p>鏆傛棤璁㈤槄婧?/p></div>';
+        grid.innerHTML = '<div class="empty-state"><p>暂无订阅源</p></div>';
         return;
       }
       const groupNames = AppState.proxyGroups.map(g => g.name);
@@ -1715,10 +1715,10 @@
         <span class="badge" style="background:var(--warn)">${pType}</span>
       </div>
       <div class="provider-card-detail">${escHtml(url)}</div>
-      ${interval ? `<div class="provider-card-detail">鏇存柊闂撮殧: ${interval}s</div>` : ''}
-      ${hc.url ? `<div class="provider-card-detail">鍋ュ悍妫€鏌? ${escHtml(hc.url)} (${hc.interval || 300}s)</div>` : ''}
+      ${interval ? `<div class="provider-card-detail">更新间隔: ${interval}s</div>` : ''}
+      ${hc.url ? `<div class="provider-card-detail">健康检查: ${escHtml(hc.url)} (${hc.interval || 300}s)</div>` : ''}
       <div class="provider-use-groups">
-        <div class="group-select-title">琚互涓嬩唬鐞嗙粍寮曠敤 (use)锛?/div>
+        <div class="group-select-title">被以下代理组引用 (use)：</div>
         <div class="group-checkboxes">
           ${AppState.proxyGroups.map((g, gi) => {
           const checked = g.use && g.use.includes(name) ? 'checked' : '';
@@ -1727,8 +1727,8 @@
         </div>
       </div>
       <div class="provider-card-actions">
-        <button class="btn btn-outline btn-small" onclick="editProvider('${escAttr(name)}')">缂栬緫</button>
-        <button class="btn btn-danger btn-small" onclick="deleteProvider('${escAttr(name)}')">鍒犻櫎</button>
+        <button class="btn btn-outline btn-small" onclick="editProvider('${escAttr(name)}')">编辑</button>
+        <button class="btn btn-danger btn-small" onclick="deleteProvider('${escAttr(name)}')">删除</button>
       </div>
     </div>`;
       }).join('');
@@ -1740,9 +1740,9 @@
       const type = document.getElementById('airportType').value;
       const autoUpdate = document.getElementById('airportAutoUpdate').checked;
 
-      if (!name) { toast('璇疯緭鍏ヨ闃呭悕绉?, 'error'); return; }
-      if (!url && type === 'http') { toast('璇疯緭鍏ヨ闃呴摼鎺?, 'error'); return; }
-      if (AppState.proxyProviders[name]) { toast('璇ュ悕绉板凡瀛樺湪锛岃鎹竴涓?, 'error'); return; }
+      if (!name) { toast('请输入订阅名称', 'error'); return; }
+      if (!url && type === 'http') { toast('请输入订阅链接', 'error'); return; }
+      if (AppState.proxyProviders[name]) { toast('该名称已存在，请换一个', 'error'); return; }
 
       const provider = { type };
       if (type === 'http') {
@@ -1777,7 +1777,7 @@
       document.getElementById('airportInterval').value = '86400';
       document.getElementById('airportHealthInterval').value = '300';
 
-      toast('璁㈤槄婧愬凡娣诲姞');
+      toast('订阅源已添加');
       renderAll();
     }
 
@@ -1801,19 +1801,19 @@
       const hc = p['health-check'] || {};
       c.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
     <div class="modal" style="max-width:520px">
-      <h3>缂栬緫璁㈤槄婧? ${escHtml(name)}</h3>
-      <div class="form-group"><label>鍚嶇О</label><input id="ep_name" value="${escAttr(name)}"></div>
-      <div class="form-group"><label>绫诲瀷</label><select id="ep_type">
+      <h3>编辑订阅源: ${escHtml(name)}</h3>
+      <div class="form-group"><label>名称</label><input id="ep_name" value="${escAttr(name)}"></div>
+      <div class="form-group"><label>类型</label><select id="ep_type">
         <option value="http" ${p.type === 'http' ? 'selected' : ''}>http</option>
         <option value="file" ${p.type === 'file' ? 'selected' : ''}>file</option>
       </select></div>
-      <div class="form-group"><label>${p.type === 'http' ? '璁㈤槄閾炬帴' : '鏂囦欢璺緞'}</label><input id="ep_url" class="provider-url-input" value="${escAttr(p.url || p.path || '')}"></div>
-      <div class="form-group"><label>鏇存柊闂撮殧 (绉?</label><input id="ep_interval" type="number" value="${p.interval || 86400}"></div>
-      <div class="form-group"><label>鍋ュ悍妫€鏌?URL</label><input id="ep_hc_url" value="${escAttr(hc.url || 'http://www.gstatic.com/generate_204')}"></div>
-      <div class="form-group"><label>妫€鏌ラ棿闅?(绉?</label><input id="ep_hc_interval" type="number" value="${hc.interval || 300}"></div>
+      <div class="form-group"><label>${p.type === 'http' ? '订阅链接' : '文件路径'}</label><input id="ep_url" class="provider-url-input" value="${escAttr(p.url || p.path || '')}"></div>
+      <div class="form-group"><label>更新间隔 (秒)</label><input id="ep_interval" type="number" value="${p.interval || 86400}"></div>
+      <div class="form-group"><label>健康检查 URL</label><input id="ep_hc_url" value="${escAttr(hc.url || 'http://www.gstatic.com/generate_204')}"></div>
+      <div class="form-group"><label>检查间隔 (秒)</label><input id="ep_hc_interval" type="number" value="${hc.interval || 300}"></div>
       <div class="btn-group" style="margin-top:16px">
-        <button class="btn btn-outline" onclick="closeModal()">鍙栨秷</button>
-        <button class="btn btn-primary" onclick="saveProvider('${escAttr(name)}')">淇濆瓨</button>
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveProvider('${escAttr(name)}')">保存</button>
       </div>
     </div>
   </div>`;
@@ -1827,8 +1827,8 @@
       const hcUrl = document.getElementById('ep_hc_url').value.trim();
       const hcInterval = parseInt(document.getElementById('ep_hc_interval').value) || 300;
 
-      if (!newName) { toast('璇疯緭鍏ュ悕绉?, 'error'); return; }
-      if (newName !== oldName && AppState.proxyProviders[newName]) { toast('璇ュ悕绉板凡瀛樺湪', 'error'); return; }
+      if (!newName) { toast('请输入名称', 'error'); return; }
+      if (newName !== oldName && AppState.proxyProviders[newName]) { toast('该名称已存在', 'error'); return; }
 
       const provider = { type };
       if (type === 'http') { provider.url = url; provider.interval = interval; }
@@ -1848,12 +1848,12 @@
       AppState.proxyProviders[newName] = provider;
 
       closeModal();
-      toast('璁㈤槄婧愬凡鏇存柊');
+      toast('订阅源已更新');
       renderAll();
     }
 
     function deleteProvider(name) {
-      showModal('鍒犻櫎璁㈤槄婧?, `纭畾瑕佸垹闄よ闃呮簮 "${escHtml(name)}" 鍚楋紵灏嗕粠鎵€鏈変唬鐞嗙粍鐨?use 寮曠敤涓Щ闄ゃ€俙, () => {
+      showModal('删除订阅源', `确定要删除订阅源 "${escHtml(name)}" 吗？将从所有代理组的 use 引用中移除。`, () => {
         delete AppState.proxyProviders[name];
         AppState.proxyGroups.forEach(g => {
           if (g.use) {
@@ -1861,7 +1861,7 @@
             if (!g.use.length) delete g.use;
           }
         });
-        toast('璁㈤槄婧愬凡鍒犻櫎');
+        toast('订阅源已删除');
         renderAll();
       });
     }
@@ -1875,7 +1875,7 @@
       a.download = 'clash-config.yaml';
       a.click();
       URL.revokeObjectURL(a.href);
-      toast('閰嶇疆宸插鍑?);
+      toast('配置已导出');
     }
 
     function togglePreview() {
@@ -1890,9 +1890,9 @@
       const text = document.getElementById('yamlPreview').textContent;
       navigator.clipboard.writeText(text).then(() => {
         const btn = document.querySelector('.copy-btn');
-        btn.textContent = '宸插鍒?;
+        btn.textContent = '已复制';
         btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = '澶嶅埗'; btn.classList.remove('copied'); }, 1500);
+        setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
       });
     }
 
