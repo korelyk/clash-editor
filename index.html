@@ -1,947 +1,564 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clash Verge 节点配置编辑器</title>
-  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
-    :root {
-      /* Modern Dark Palette - Enhanced */
-      --bg-color: #0f172a;
-      --surface-glass: rgba(30, 41, 59, 0.7);
-      --surface-glass-hover: rgba(51, 65, 85, 0.8);
-      --border-glass: rgba(255, 255, 255, 0.1);
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-
-      /* Vibrant Accents */
-      --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-      --primary-glow: 0 0 25px rgba(168, 85, 247, 0.5);
-      --accent: #8b5cf6;
-
-      /* Node Colors (Neon) */
-      --ss: #3b82f6;
-      /* Blue */
-      --vmess: #d946ef;
-      /* Fuchsia */
-      --trojan: #f59e0b;
-      /* Amber */
-      --hysteria2: #10b981;
-      /* Emerald */
-      --vless: #06b6d4;
-      /* Cyan */
-      --hy2: #10b981;
-
-      /* Functional Colors */
-      --danger: #ef4444;
-      --success: #22c55e;
-      --warn: #f59e0b;
-
-      --radius: 20px;
-      --radius-sm: 12px;
-      --shadow-lg: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Outfit', sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-primary);
-      line-height: 1.6;
-      min-height: 100vh;
-      overflow-x: hidden;
-      position: relative;
-    }
-
-    /* Animated Background Blobs */
-    body::before,
-    body::after {
-      content: '';
-      position: fixed;
-      width: 600px;
-      height: 600px;
-      border-radius: 50%;
-      filter: blur(80px);
-      z-index: -1;
-      opacity: 0.4;
-      animation: float 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    body::before {
-      background: radial-gradient(#4f46e5, transparent 70%);
-      top: -100px;
-      left: -100px;
-    }
-
-    body::after {
-      background: radial-gradient(#ec4899, transparent 70%);
-      bottom: -100px;
-      right: -100px;
-      animation-delay: -10s;
-    }
-
-    @keyframes float {
-      0% {
-        transform: translate(0, 0) scale(1);
-      }
-
-      100% {
-        transform: translate(100px, 50px) scale(1.1);
-      }
-    }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
-
-    button {
-      cursor: pointer;
-      border: none;
-      font-family: inherit;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Inputs & Forms */
-    input,
-    select,
-    textarea {
-      font-family: inherit;
-      color: var(--text-primary);
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid var(--border-glass);
-      border-radius: var(--radius-sm);
-      padding: 12px 16px;
-      width: 100%;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(4px);
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-      background: rgba(30, 41, 59, 0.8);
-      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
-      transform: translateY(-1px);
-    }
-
-    select {
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 40px;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 24px;
-    }
-
-    /* Visual Header */
-    .header {
-      padding: 40px 0 20px;
-      text-align: center;
-      position: relative;
-      margin-bottom: 40px;
-      border-bottom: none;
-      background: none;
-    }
-
-    .header h1 {
-      font-size: 3em;
-      font-weight: 800;
-      background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -2px;
-      margin-bottom: 12px;
-      text-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-
-    .header p {
-      color: var(--text-secondary);
-      font-size: 1.1em;
-      font-weight: 300;
-      letter-spacing: 0.5px;
-    }
-
-    /* Glass Sections */
-    .section {
-      background: var(--surface-glass);
-      border: 1px solid var(--border-glass);
-      border-radius: var(--radius);
-      padding: 32px;
-      margin-bottom: 32px;
-      backdrop-filter: blur(20px);
-      box-shadow: var(--shadow-lg);
-      animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-    }
-
-    .section:nth-child(1) {
-      animation-delay: 0.1s;
-    }
-
-    .section:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-
-    .section:nth-child(3) {
-      animation-delay: 0.3s;
-    }
-
-    .section-title {
-      font-size: 1.4em;
-      font-weight: 700;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--text-primary);
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border-glass);
-    }
-
-    .section-title i {
-      font-size: 1.25em;
-      color: var(--accent);
-    }
-
-    /* Modern Buttons */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 12px 24px;
-      border-radius: 100px;
-      /* Pill shape */
-      font-size: 1em;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .btn-primary {
-      background: var(--primary-gradient);
-      color: #fff;
-      box-shadow: var(--primary-glow);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 10px 30px rgba(168, 85, 247, 0.5);
-    }
-
-    .btn-primary:active {
-      transform: translateY(-1px);
-    }
-
-    .btn-danger {
-      background: rgba(239, 68, 68, 0.1);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.2);
-    }
-
-    .btn-danger:hover {
-      background: rgba(239, 68, 68, 0.2);
-      border-color: #ef4444;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-    }
-
-    .btn-success {
-      background: rgba(34, 197, 94, 0.1);
-      color: #22c55e;
-      border: 1px solid rgba(34, 197, 94, 0.2);
-    }
-
-    .btn-success:hover {
-      background: rgba(34, 197, 94, 0.2);
-      border-color: #22c55e;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
-    }
-
-    .btn-outline {
-      background: transparent;
-      color: var(--text-secondary);
-      border: 1px solid var(--border-glass);
-    }
-
-    .btn-outline:hover {
-      border-color: var(--text-primary);
-      color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.05);
-      transform: translateY(-2px);
-    }
-
-    .btn-small {
-      padding: 8px 16px;
-      font-size: 0.9em;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    /* Upload/Import Area */
-    .file-label {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 24px;
-      border-radius: 100px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border-glass);
-      cursor: pointer;
-      font-size: 1em;
-      font-weight: 500;
-      transition: all 0.3s;
-      color: var(--text-secondary);
-    }
-
-    .file-label:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(139, 92, 246, 0.1);
-      transform: translateY(-2px);
-    }
-
-    .file-label input[type=file] {
-      display: none;
-    }
-
-    .import-area textarea {
-      height: 160px;
-      font-size: 0.9em;
-      border-radius: var(--radius-sm);
-    }
-
-    /* Link Paste Area */
-    .link-area {
-      border: 2px dashed rgba(139, 92, 246, 0.3);
-      border-radius: var(--radius);
-      padding: 32px;
-      background: radial-gradient(circle at center, rgba(139, 92, 246, 0.05) 0%, transparent 60%);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      text-align: center;
-    }
-
-    .link-area:hover {
-      border-color: var(--accent);
-      background: radial-gradient(circle at center, rgba(139, 92, 246, 0.1) 0%, transparent 60%);
-    }
-
-    .link-area textarea {
-      background: rgba(15, 23, 42, 0.4);
-      border: 1px solid var(--border-glass);
-      font-family: 'Consolas', monospace;
-      min-height: 100px;
-    }
-
-    /* Node Card Results */
-    .link-card {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid var(--border-glass);
-      border-radius: var(--radius-sm);
-      padding: 20px;
-      margin-bottom: 16px;
-      animation: slideInLeft 0.4s ease-out backwards;
-    }
-
-    .link-card.error {
-      border-color: rgba(239, 68, 68, 0.5);
-      background: rgba(239, 68, 68, 0.05);
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 6px 14px;
-      border-radius: 100px;
-      font-size: 0.75em;
-      font-weight: 800;
-      text-transform: uppercase;
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      letter-spacing: 0.8px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-
-    .badge-ss {
-      background: var(--ss);
-      box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-    }
-
-    .badge-vmess {
-      background: var(--vmess);
-      box-shadow: 0 0 15px rgba(217, 70, 239, 0.4);
-    }
-
-    .badge-trojan {
-      background: var(--trojan);
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
-    }
-
-    .badge-hysteria2 {
-      background: var(--hysteria2);
-      box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
-    }
-
-    .badge-vless {
-      background: var(--vless);
-      box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
-    }
-
-    .badge-error {
-      background: var(--danger);
-    }
-
-    /* Proxy Grid */
-    .proxy-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
-    }
-
-    .proxy-card {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-glass);
-      border-radius: var(--radius);
-      padding: 20px;
-      position: relative;
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      /* Bouncy */
-      overflow: hidden;
-    }
-
-    .proxy-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 6px;
-      height: 100%;
-      background: var(--text-secondary);
-      transition: all 0.3s;
-    }
-
-    .proxy-card:hover {
-      transform: translateY(-8px) scale(1.02);
-      background: rgba(255, 255, 255, 0.05);
-      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
-      border-color: rgba(255, 255, 255, 0.2);
-      z-index: 1;
-    }
-
-    .proxy-card[data-type=ss]::before {
-      background: var(--ss);
-    }
-
-    .proxy-card[data-type=vmess]::before {
-      background: var(--vmess);
-    }
-
-    .proxy-card[data-type=trojan]::before {
-      background: var(--trojan);
-    }
-
-    .proxy-card[data-type=hysteria2]::before {
-      background: var(--hysteria2);
-    }
-
-    .proxy-card[data-type=vless]::before {
-      background: var(--vless);
-    }
-
-    .proxy-card-name {
-      font-weight: 700;
-      font-size: 1.1em;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .proxy-card-detail {
-      font-size: 0.9em;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .proxy-card-actions {
-      margin-top: 16px;
-      display: flex;
-      gap: 8px;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-
-    .proxy-card:hover .proxy-card-actions {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* Layout & Responsive */
-    .main-layout {
-      display: grid;
-      grid-template-columns: 1fr 420px;
-      gap: 32px;
-    }
-
-    @media(max-width: 1000px) {
-      .main-layout {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .form-section {
-      background: rgba(15, 23, 42, 0.7);
-      position: sticky;
-      top: 32px;
-      border: 1px solid var(--accent);
-      box-shadow: 0 0 30px rgba(139, 92, 246, 0.15);
-      border-radius: var(--radius);
-      padding: 24px;
-    }
-
-    /* Group Management */
-    .group-item {
-      background: rgba(15, 23, 42, 0.4);
-      border: 1px solid var(--border-glass);
-      border-radius: var(--radius-sm);
-      margin-bottom: 16px;
-      overflow: hidden;
-      transition: all 0.2s;
-    }
-
-    .group-header {
-      padding: 18px 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .group-header:hover {
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    .group-name {
-      font-weight: 700;
-      color: #fff;
-      flex: 1;
-      font-size: 1.05em;
-    }
-
-    .group-type-badge {
-      font-size: 0.75em;
-      padding: 4px 10px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-secondary);
-      border: 1px solid var(--border-glass);
-      font-family: monospace;
-    }
-
-    .group-body {
-      border-top: 1px solid var(--border-glass);
-      background: rgba(0, 0, 0, 0.2);
-      padding: 24px;
-      display: none;
-    }
-
-    .group-body.show {
-      display: block;
-      animation: slideDown 0.3s ease-out;
-    }
-
-    .member-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border-radius: 100px;
-      font-size: 0.9em;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border-glass);
-      margin: 0 8px 8px 0;
-      transition: all 0.2s;
-    }
-
-    .member-tag:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.2);
-      transform: translateY(-1px);
-    }
-
-    .member-tag.is-group {
-      color: var(--accent);
-      border-color: rgba(139, 92, 246, 0.3);
-      background: rgba(139, 92, 246, 0.1);
-    }
-
-    .member-tag.is-provider {
-      color: var(--warn);
-      border-color: rgba(245, 158, 11, 0.3);
-      background: rgba(245, 158, 11, 0.1);
-      font-style: italic;
-    }
-
-    /* Providers Area */
-    .provider-card {
-      background: rgba(15, 23, 42, 0.4);
-      border: 1px solid var(--border-glass);
-      border-radius: var(--radius);
-      padding: 20px;
-      border-left: 5px solid var(--warn);
-      transition: all 0.3s;
-      margin-bottom: 20px;
-    }
-
-    .provider-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-    }
-
-    /* Modals */
-    .modal-overlay {
-      background: rgba(10, 14, 23, 0.9);
-      backdrop-filter: blur(12px);
-      animation: fadeIn 0.3s;
-    }
-
-    .modal {
-      background: #1e293b;
-      border: 1px solid var(--border-glass);
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
-      border-radius: 32px;
-      padding: 40px;
-      animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    /* Animations */
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-
-      to {
-        opacity: 1;
-      }
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes scaleIn {
-      from {
-        opacity: 0;
-        transform: scale(0.9);
-      }
-
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes slideInLeft {
-      from {
-        opacity: 0;
-        transform: translateX(-20px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    /* Toast */
-    .toast {
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--border-glass);
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-      border-radius: 16px;
-      padding: 16px 24px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .toast.success {
-      border-left: 4px solid var(--success);
-    }
-
-    .toast.error {
-      border-left: 4px solid var(--danger);
-    }
-
-    /* Typography & Utility */
-    h1,
-    h2,
-    h3 {
-      letter-spacing: -0.5px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .advanced-toggle {
-      color: var(--accent);
-      font-weight: 600;
-      padding: 10px 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .advanced-toggle:hover {
-      opacity: 0.8;
-      text-decoration: none;
-    }
-
-    .yaml-preview {
-      background: #0f172a;
-      max-height: 500px;
-      padding: 24px;
-      border-radius: 16px;
-      border: 1px solid var(--border-glass);
-      font-size: 0.85em;
-      color: #cbd5e1;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clash Verge 节点配置编辑器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #242836;
+  --border: #2e3345;
+  --text: #e4e6ed;
+  --text2: #9499ad;
+  --accent: #5b8af5;
+  --accent-hover: #4a7ae8;
+  --danger: #e55b5b;
+  --success: #4ecb71;
+  --warn: #f0b849;
+  --ss: #5b8af5;
+  --vmess: #a66ef0;
+  --trojan: #f0a34e;
+  --hysteria2: #4ecb71;
+  --vless: #4ec5cb;
+  --radius: 8px;
+  --shadow: 0 2px 12px rgba(0,0,0,.3);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+button { cursor:pointer; border:none; font:inherit; }
+input,select,textarea { font:inherit; color:var(--text); background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:8px 12px; width:100%; }
+input:focus,select:focus,textarea:focus { outline:none; border-color:var(--accent); }
+select { appearance:auto; }
+
+.container { max-width:1200px; margin:0 auto; padding:16px; }
+
+/* Header */
+.header { background:linear-gradient(135deg,#1e2235,#252a40); border-bottom:1px solid var(--border); padding:20px 0; margin-bottom:20px; text-align:center; }
+.header h1 { font-size:1.6em; font-weight:600; }
+.header p { color:var(--text2); font-size:.9em; margin-top:4px; }
+
+/* Sections */
+.section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:20px; }
+.section-title { font-size:1.1em; font-weight:600; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.section-title .icon { font-size:1.2em; }
+
+/* Buttons */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius); font-size:.9em; font-weight:500; transition:all .15s; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:var(--accent-hover); }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-danger:hover { opacity:.85; }
+.btn-success { background:var(--success); color:#fff; }
+.btn-success:hover { opacity:.85; }
+.btn-outline { background:transparent; color:var(--text2); border:1px solid var(--border); }
+.btn-outline:hover { border-color:var(--accent); color:var(--accent); }
+.btn-small { padding:4px 10px; font-size:.8em; }
+.btn-group { display:flex; gap:8px; flex-wrap:wrap; }
+
+/* Import area */
+.import-area textarea { height:120px; resize:vertical; font-family:monospace; font-size:.85em; }
+.import-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; align-items:center; }
+.file-label { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--radius); background:var(--surface2); border:1px solid var(--border); cursor:pointer; font-size:.9em; transition:all .15s; }
+.file-label:hover { border-color:var(--accent); }
+.file-label input[type=file] { display:none; }
+
+/* Link paste area */
+.link-area { border:2px dashed var(--accent); border-radius:var(--radius); padding:16px; background:rgba(91,138,245,.05); }
+.link-area textarea { height:80px; resize:vertical; font-family:monospace; font-size:.85em; border:1px solid var(--border); }
+.link-results { margin-top:16px; }
+
+/* Node result card */
+.link-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
+.link-card.error { border-color:var(--danger); }
+.link-card-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+.badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.75em; font-weight:600; text-transform:uppercase; color:#fff; }
+.badge-ss { background:var(--ss); }
+.badge-vmess { background:var(--vmess); }
+.badge-trojan { background:var(--trojan); }
+.badge-hysteria2 { background:var(--hysteria2); }
+.badge-vless { background:var(--vless); }
+.badge-error { background:var(--danger); }
+.link-card-info { font-size:.85em; color:var(--text2); }
+.link-card-info span { margin-right:16px; }
+
+/* Group selection */
+.group-select { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+.group-select-title { font-size:.85em; font-weight:600; margin-bottom:8px; color:var(--text2); }
+.group-checkboxes { display:flex; flex-wrap:wrap; gap:8px; }
+.group-checkboxes label { display:flex; align-items:center; gap:4px; font-size:.85em; padding:4px 8px; border-radius:4px; background:var(--surface); cursor:pointer; }
+.group-checkboxes input[type=checkbox] { width:auto; accent-color:var(--accent); }
+.new-group-form { margin-top:10px; padding:10px; background:var(--surface); border-radius:var(--radius); }
+.new-group-form .form-row { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; align-items:center; }
+.new-group-form .form-row > * { flex:1; min-width:120px; }
+.new-group-toggle { color:var(--accent); font-size:.85em; cursor:pointer; background:none; border:none; padding:0; margin-top:6px; }
+.new-group-toggle:hover { text-decoration:underline; }
+
+/* Node cards grid */
+.proxy-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+.proxy-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:12px 12px 12px 16px; border-left:4px solid var(--text2); position:relative; transition:border-color .15s; }
+.proxy-card:hover { border-color:var(--accent); }
+.proxy-card[data-type=ss] { border-left-color:var(--ss); }
+.proxy-card[data-type=vmess] { border-left-color:var(--vmess); }
+.proxy-card[data-type=trojan] { border-left-color:var(--trojan); }
+.proxy-card[data-type=hysteria2] { border-left-color:var(--hysteria2); }
+.proxy-card[data-type=vless] { border-left-color:var(--vless); }
+.proxy-card-name { font-weight:600; font-size:.95em; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; }
+.proxy-card-detail { font-size:.8em; color:var(--text2); }
+.proxy-card-actions { display:flex; gap:6px; margin-top:8px; }
+
+/* Main layout */
+.main-layout { display:grid; grid-template-columns:1fr 380px; gap:20px; }
+@media(max-width:900px) { .main-layout { grid-template-columns:1fr; } }
+
+/* Form */
+.form-section { position:sticky; top:16px; align-self:start; }
+.form-group { margin-bottom:12px; }
+.form-group label { display:block; font-size:.85em; font-weight:500; margin-bottom:4px; color:var(--text2); }
+.form-group label.required::after { content:" *"; color:var(--danger); }
+.advanced-toggle { color:var(--accent); font-size:.85em; cursor:pointer; background:none; border:none; padding:4px 0; margin:8px 0; }
+.advanced-toggle:hover { text-decoration:underline; }
+.advanced-fields { display:none; }
+.advanced-fields.show { display:block; }
+.form-group-select { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+
+/* Proxy groups */
+.group-item { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; overflow:hidden; }
+.group-header { display:flex; align-items:center; padding:12px 16px; cursor:pointer; gap:10px; user-select:none; }
+.group-header:hover { background:rgba(255,255,255,.03); }
+.group-header .arrow { transition:transform .2s; font-size:.8em; }
+.group-header .arrow.open { transform:rotate(90deg); }
+.group-name { font-weight:600; flex:1; }
+.group-type-badge { font-size:.75em; padding:2px 8px; border-radius:4px; background:var(--surface); color:var(--text2); border:1px solid var(--border); }
+.group-body { padding:12px 16px; border-top:1px solid var(--border); display:none; }
+.group-body.show { display:block; }
+.group-members { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; min-height:30px; }
+.member-tag { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:4px; font-size:.8em; background:var(--surface); border:1px solid var(--border); }
+.member-tag.is-group { border-color:var(--accent); color:var(--accent); }
+.member-tag.is-provider { border-color:var(--warn); color:var(--warn); font-style:italic; }
+.member-tag .remove-member { cursor:pointer; opacity:.6; background:none; border:none; color:inherit; font-size:1.1em; padding:0 2px; }
+.member-tag .remove-member:hover { opacity:1; color:var(--danger); }
+.add-member-row { display:flex; gap:8px; }
+.add-member-row select { flex:1; }
+
+/* Export */
+.yaml-preview-wrap { position:relative; display:none; margin-top:10px; }
+.yaml-preview-wrap.show { display:block; }
+.yaml-preview { max-height:400px; overflow:auto; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); padding:12px; font-family:monospace; font-size:.82em; white-space:pre-wrap; word-break:break-all; margin:0; }
+.copy-btn { position:absolute; top:8px; right:8px; padding:4px 12px; font-size:.8em; background:var(--surface2); color:var(--text2); border:1px solid var(--border); border-radius:4px; cursor:pointer; z-index:1; transition:all .15s; }
+.copy-btn:hover { border-color:var(--accent); color:var(--accent); }
+.copy-btn.copied { border-color:var(--success); color:var(--success); }
+
+/* Provider cards */
+.provider-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px; }
+.provider-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:12px 12px 12px 16px; border-left:4px solid var(--warn); position:relative; }
+.provider-card:hover { border-color:var(--accent); }
+.provider-card-name { font-weight:600; font-size:.95em; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; }
+.provider-card-detail { font-size:.8em; color:var(--text2); word-break:break-all; margin-bottom:4px; }
+.provider-card-actions { display:flex; gap:6px; margin-top:8px; }
+.provider-url-input { font-family:monospace; font-size:.85em; }
+.airport-area { border:2px dashed var(--warn); border-radius:var(--radius); padding:16px; background:rgba(240,184,73,.05); }
+.airport-area textarea { height:60px; resize:vertical; font-family:monospace; font-size:.85em; border:1px solid var(--border); }
+.airport-form-row { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; align-items:flex-end; }
+.airport-form-row .form-group { flex:1; min-width:140px; margin-bottom:0; }
+.provider-use-groups { margin-top:8px; padding-top:8px; border-top:1px solid var(--border); }
+.provider-use-groups .group-checkboxes { margin-top:6px; }
+
+/* Modal */
+.modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; z-index:1000; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; max-width:420px; width:90%; box-shadow:var(--shadow); }
+.modal h3 { margin-bottom:12px; }
+.modal p { color:var(--text2); font-size:.9em; margin-bottom:16px; }
+.modal .btn-group { justify-content:flex-end; }
+
+/* Toast */
+.toast { position:fixed; top:20px; right:20px; padding:12px 20px; border-radius:var(--radius); color:#fff; font-size:.9em; z-index:1100; animation:slideIn .3s; box-shadow:var(--shadow); }
+.toast.success { background:var(--success); }
+.toast.error { background:var(--danger); }
+.toast.info { background:var(--accent); }
+@keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+
+.empty-state { text-align:center; padding:40px 20px; color:var(--text2); }
+.empty-state p { margin-top:8px; font-size:.9em; }
+
+.hidden { display:none !important; }
+</style>
+<style>
+
+/* Youth Theme Overrides */
+:root {
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface2: #f2f6ff;
+  --border: #e6e9f2;
+  --text: #0f172a;
+  --text2: #64748b;
+  --accent: #14b8a6;
+  --accent-2: #ff7a59;
+  --accent-hover: #0f9d92;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --warn: #f59e0b;
+  --ss: #0ea5e9;
+  --vmess: #f97316;
+  --trojan: #ef4444;
+  --hysteria2: #10b981;
+  --vless: #3b82f6;
+  --radius: 14px;
+  --shadow: 0 12px 30px rgba(15,23,42,.08);
+  --shadow-strong: 0 18px 50px rgba(15,23,42,.14);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: "Space Grotesk","Noto Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(1200px 600px at -10% -20%, rgba(20,184,166,.18), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(255,122,89,.18), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  line-height:1.6;
+  min-height:100vh;
+}
+body::before,
+body::after {
+  content:"";
+  position:fixed;
+  inset:auto;
+  pointer-events:none;
+  z-index:-1;
+  filter:blur(40px);
+}
+body::before {
+  width:420px;
+  height:420px;
+  top:-120px;
+  right:-120px;
+  background:radial-gradient(circle, rgba(59,130,246,.22), transparent 60%);
+}
+body::after {
+  width:520px;
+  height:520px;
+  bottom:-180px;
+  left:-160px;
+  background:radial-gradient(circle, rgba(16,185,129,.18), transparent 62%);
+}
+button { cursor:pointer; border:none; font:inherit; }
+input,select,textarea {
+  font:inherit;
+  color:var(--text);
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  width:100%;
+  box-shadow:0 1px 0 rgba(15,23,42,.04);
+  transition:border-color .15s, box-shadow .15s, transform .15s;
+}
+input:focus,select:focus,textarea:focus {
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 4px rgba(20,184,166,.15);
+}
+select { appearance:auto; }
+
+.header {
+  background:linear-gradient(135deg, #ffffff 0%, #eef6ff 55%, #fff3ec 100%);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:26px 18px;
+  margin:20px auto 24px;
+  text-align:center;
+  max-width:1200px;
+  box-shadow:var(--shadow);
+  position:relative;
+  overflow:hidden;
+}
+.header::before {
+  content:"";
+  position:absolute;
+  width:320px;
+  height:320px;
+  right:-120px;
+  top:-140px;
+  background:radial-gradient(circle, rgba(20,184,166,.25), transparent 60%);
+  animation:float 10s ease-in-out infinite;
+}
+.header::after {
+  content:"";
+  position:absolute;
+  width:260px;
+  height:260px;
+  left:-120px;
+  bottom:-160px;
+  background:radial-gradient(circle, rgba(255,122,89,.25), transparent 60%);
+  animation:float 12s ease-in-out infinite;
+}
+.header h1 { font-size:1.9em; font-weight:700; letter-spacing:.2px; }
+.header p { color:var(--text2); font-size:.95em; margin-top:6px; }
+
+.section {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:var(--shadow);
+  backdrop-filter:saturate(120%) blur(4px);
+  animation:rise .35s ease;
+}
+.section-title {
+  font-size:1.08em;
+  font-weight:700;
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#111827;
+}
+
+.btn {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:10px 18px;
+  border-radius:999px;
+  font-size:.9em;
+  font-weight:600;
+  transition:transform .15s, box-shadow .15s, background .2s, color .2s, border-color .2s;
+  box-shadow:0 6px 14px rgba(15,23,42,.08);
+}
+.btn:active { transform:translateY(1px); }
+.btn-primary {
+  background:linear-gradient(135deg, var(--accent), var(--accent-2));
+  color:#fff;
+}
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 10px 20px rgba(20,184,166,.25); }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-danger:hover { opacity:.9; transform:translateY(-1px); }
+.btn-success { background:var(--success); color:#fff; }
+.btn-success:hover { opacity:.9; transform:translateY(-1px); }
+.btn-outline { background:#fff; color:var(--text2); border:1px solid var(--border); box-shadow:none; }
+.btn-outline:hover { border-color:var(--accent); color:var(--accent); background:#fff; }
+.btn-small { padding:6px 12px; font-size:.8em; border-radius:10px; }
+
+.import-area textarea { height:120px; resize:vertical; font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.85em; }
+.import-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; align-items:center; }
+#importText { font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.88em; }
+.file-label { display:inline-flex; align-items:center; gap:6px; padding:10px 16px; border-radius:999px; background:var(--surface2); border:1px solid var(--border); cursor:pointer; font-size:.9em; transition:all .15s; box-shadow:0 4px 10px rgba(15,23,42,.06); }
+.file-label:hover { border-color:var(--accent); transform:translateY(-1px); }
+
+.link-area { border:2px dashed rgba(20,184,166,.55); border-radius:var(--radius); padding:16px; background:linear-gradient(135deg, rgba(20,184,166,.08), rgba(255,122,89,.06)); }
+.link-area textarea { height:80px; resize:vertical; font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.85em; border:1px solid var(--border); }
+.link-results { margin-top:16px; }
+
+.link-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; box-shadow:var(--shadow); }
+.badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:.72em; font-weight:700; text-transform:uppercase; letter-spacing:.3px; color:#fff; }
+
+.group-checkboxes label { display:flex; align-items:center; gap:6px; font-size:.85em; padding:6px 10px; border-radius:999px; background:var(--surface); cursor:pointer; border:1px solid var(--border); }
+.new-group-form { margin-top:10px; padding:10px; background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); }
+
+.proxy-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:12px 12px 12px 16px; border-left:4px solid var(--text2); position:relative; transition:border-color .15s, transform .15s, box-shadow .15s; box-shadow:var(--shadow); }
+.proxy-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:var(--shadow-strong); }
+
+.group-item { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; overflow:hidden; box-shadow:var(--shadow); }
+.group-header:hover { background:rgba(20,184,166,.06); }
+.group-type-badge { font-size:.75em; padding:3px 10px; border-radius:999px; background:var(--surface); color:var(--text2); border:1px solid var(--border); }
+.group-body { padding:12px 16px; border-top:1px solid var(--border); display:none; background:linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.95)); }
+.member-tag { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:999px; font-size:.8em; background:var(--surface); border:1px solid var(--border); }
+
+.yaml-preview { max-height:400px; overflow:auto; background:#0b1020; border:1px solid #0f172a; border-radius:var(--radius); padding:12px; font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.82em; white-space:pre-wrap; word-break:break-all; margin:0; color:#dbeafe; }
+.copy-btn { position:absolute; top:8px; right:8px; padding:6px 12px; font-size:.8em; background:rgba(255,255,255,.9); color:var(--text2); border:1px solid var(--border); border-radius:999px; cursor:pointer; z-index:1; transition:all .15s; }
+
+.provider-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:12px 12px 12px 16px; border-left:4px solid var(--warn); position:relative; box-shadow:var(--shadow); transition:transform .15s, box-shadow .15s, border-color .15s; }
+.provider-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:var(--shadow-strong); }
+.provider-url-input { font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.85em; }
+.airport-area { border:2px dashed rgba(245,158,11,.65); border-radius:var(--radius); padding:16px; background:linear-gradient(135deg, rgba(245,158,11,.08), rgba(20,184,166,.06)); }
+.airport-area textarea { height:60px; resize:vertical; font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.85em; border:1px solid var(--border); }
+
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; max-width:420px; width:90%; box-shadow:var(--shadow-strong); }
+.toast { position:fixed; top:20px; right:20px; padding:12px 20px; border-radius:999px; color:#fff; font-size:.9em; z-index:1100; animation:slideIn .3s; box-shadow:var(--shadow-strong); }
+
+@keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+@keyframes rise { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes float { 0% { transform:translateY(0); } 50% { transform:translateY(14px); } 100% { transform:translateY(0); } }
+
+@media(max-width:700px) {
+  .header { margin:14px 12px 18px; padding:20px 14px; }
+  .header h1 { font-size:1.55em; }
+  .container { padding:12px; }
+  .btn { padding:9px 14px; }
+}
+
+</style>
 </head>
-
 <body>
 
-  <div class="header">
-    <h1>Clash Verge 节点配置编辑器</h1>
-    <p>可视化管理代理节点和策略组，支持粘贴分享链接快速添加</p>
+<div class="header">
+  <h1>Clash Verge 节点配置编辑器</h1>
+  <p>可视化管理代理节点和策略组，支持粘贴分享链接快速添加</p>
+</div>
+
+<div class="container">
+  <!-- Import Section -->
+  <div class="section" id="importSection">
+    <div class="section-title"><span class="icon">📥</span> 导入配置</div>
+    <textarea id="importText" placeholder="粘贴 YAML 配置内容..."></textarea>
+    <div class="import-actions">
+      <button class="btn btn-primary" onclick="parseConfig()">解析配置</button>
+      <label class="file-label">
+        📁 上传 YAML 文件
+        <input type="file" accept=".yaml,.yml" onchange="loadFile(event)">
+      </label>
+      <button class="btn btn-outline" onclick="startEmpty()">从零开始</button>
+    </div>
   </div>
 
-  <div class="container">
-    <!-- Import Section -->
-    <div class="section" id="importSection">
-      <div class="section-title"><i class="ph-bold ph-download-simple"></i> 导入配置</div>
-      <textarea id="importText" placeholder="粘贴 YAML 配置内容..."></textarea>
-      <div class="import-actions">
-        <button class="btn btn-primary" onclick="parseConfig()">解析配置</button>
-        <label class="file-label">
-          📁 上传 YAML 文件
-          <input type="file" accept=".yaml,.yml" onchange="loadFile(event)">
-        </label>
-        <button class="btn btn-outline" onclick="startEmpty()">从零开始</button>
+  <!-- Editor (hidden until config loaded) -->
+  <div id="editorArea" class="hidden">
+
+    <!-- Link Paste Section -->
+    <div class="section">
+      <div class="section-title"><span class="icon">🔗</span> 粘贴链接添加节点</div>
+      <div class="link-area">
+        <textarea id="linkInput" placeholder="粘贴节点分享链接，支持多行批量添加&#10;支持 ss:// vmess:// vless:// trojan:// hysteria2:// hy2://"></textarea>
+        <div style="margin-top:10px">
+          <button class="btn btn-primary" onclick="parseLinks()">识别并添加</button>
+        </div>
+        <div class="link-results" id="linkResults"></div>
       </div>
     </div>
 
-    <!-- Editor (hidden until config loaded) -->
-    <div id="editorArea" class="hidden">
-
-      <!-- Link Paste Section -->
-      <div class="section">
-        <div class="section-title"><i class="ph-bold ph-link"></i> 粘贴链接添加节点</div>
-        <div class="link-area">
-          <textarea id="linkInput"
-            placeholder="粘贴节点分享链接，支持多行批量添加&#10;支持 ss:// vmess:// vless:// trojan:// hysteria2:// hy2://"></textarea>
-          <div style="margin-top:10px">
-            <button class="btn btn-primary" onclick="parseLinks()">识别并添加</button>
-          </div>
-          <div class="link-results" id="linkResults"></div>
+    <!-- Airport Subscription Section -->
+    <div class="section">
+      <div class="section-title"><span class="icon">✈️</span> 机场订阅管理</div>
+      <div class="airport-area">
+        <div style="font-size:.85em;color:var(--text2);margin-bottom:10px">添加机场订阅链接，将作为 proxy-provider 引入配置，可被代理组通过 use 引用</div>
+        <div class="form-group" style="margin-bottom:0">
+          <input id="airportUrl" class="provider-url-input" placeholder="粘贴机场订阅链接 (HTTP/HTTPS URL)">
         </div>
-      </div>
-
-      <!-- Airport Subscription Section -->
-      <div class="section">
-        <div class="section-title"><i class="ph-bold ph-airplane-tilt"></i> 机场订阅管理</div>
-        <div class="airport-area">
-          <div style="font-size:.85em;color:var(--text2);margin-bottom:10px">添加机场订阅链接，将作为 proxy-provider 引入配置，可被代理组通过
-            use 引用</div>
-          <div class="form-group" style="margin-bottom:0">
-            <input id="airportUrl" class="provider-url-input" placeholder="粘贴机场订阅链接 (HTTP/HTTPS URL)">
+        <div class="airport-form-row">
+          <div class="form-group">
+            <label>名称</label>
+            <input id="airportName" placeholder="例如: 我的机场">
           </div>
+          <div class="form-group">
+            <label>类型</label>
+            <select id="airportType">
+              <option value="http">http (远程订阅)</option>
+              <option value="file">file (本地文件)</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:0 0 auto;min-width:auto;align-self:flex-end;padding-bottom:2px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap">
+              <input type="checkbox" id="airportAutoUpdate" checked style="width:auto;accent-color:var(--accent)" onchange="toggleAirportAutoUpdate()"> 自动更新
+            </label>
+          </div>
+        </div>
+        <div id="airportAutoUpdateFields">
           <div class="airport-form-row">
             <div class="form-group">
-              <label>名称</label>
-              <input id="airportName" placeholder="例如: 我的机场">
+              <label>更新间隔 (秒)</label>
+              <input id="airportInterval" type="number" value="86400" placeholder="86400">
             </div>
             <div class="form-group">
-              <label>类型</label>
-              <select id="airportType">
-                <option value="http">http (远程订阅)</option>
-                <option value="file">file (本地文件)</option>
-              </select>
+              <label>健康检查 URL</label>
+              <input id="airportHealthUrl" value="http://www.gstatic.com/generate_204" placeholder="健康检查地址">
             </div>
-            <div class="form-group" style="flex:0 0 auto;min-width:auto;align-self:flex-end;padding-bottom:2px">
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap">
-                <input type="checkbox" id="airportAutoUpdate" checked style="width:auto;accent-color:var(--accent)"
-                  onchange="toggleAirportAutoUpdate()"> 自动更新
-              </label>
+            <div class="form-group">
+              <label>检查间隔 (秒)</label>
+              <input id="airportHealthInterval" type="number" value="300" placeholder="300">
             </div>
-          </div>
-          <div id="airportAutoUpdateFields">
-            <div class="airport-form-row">
-              <div class="form-group">
-                <label>更新间隔 (秒)</label>
-                <input id="airportInterval" type="number" value="86400" placeholder="86400">
-              </div>
-              <div class="form-group">
-                <label>健康检查 URL</label>
-                <input id="airportHealthUrl" value="http://www.gstatic.com/generate_204" placeholder="健康检查地址">
-              </div>
-              <div class="form-group">
-                <label>检查间隔 (秒)</label>
-                <input id="airportHealthInterval" type="number" value="300" placeholder="300">
-              </div>
-            </div>
-          </div>
-          <div style="margin-top:12px">
-            <div class="group-select-title">添加后加入代理组（use 引用）：</div>
-            <div class="group-checkboxes" id="airportGroupCheckboxes"></div>
-          </div>
-          <div style="margin-top:12px">
-            <button class="btn btn-primary" onclick="addAirport()">添加订阅</button>
           </div>
         </div>
-        <div style="margin-top:16px">
-          <div style="font-size:.9em;font-weight:600;margin-bottom:8px">已有订阅源 (<span id="providerCount">0</span>)</div>
-          <div id="providerGrid" class="provider-grid"></div>
+        <div style="margin-top:12px">
+          <div class="group-select-title">添加后加入代理组（use 引用）：</div>
+          <div class="group-checkboxes" id="airportGroupCheckboxes"></div>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn btn-primary" onclick="addAirport()">添加订阅</button>
         </div>
       </div>
+      <div style="margin-top:16px">
+        <div style="font-size:.9em;font-weight:600;margin-bottom:8px">已有订阅源 (<span id="providerCount">0</span>)</div>
+        <div id="providerGrid" class="provider-grid"></div>
+      </div>
+    </div>
 
-      <!-- Main layout: nodes + form -->
-      <div class="main-layout">
-        <div>
-          <div class="section">
-            <div class="section-title" style="justify-content:space-between">
-              <span><i class="ph-bold ph-globe-hemisphere-west"></i> 代理节点 (<span id="proxyCount">0</span>)</span>
-              <button class="btn btn-outline btn-small" onclick="showAddForm()">+ 手动添加</button>
-            </div>
-            <div id="proxyGrid" class="proxy-grid"></div>
+    <!-- Main layout: nodes + form -->
+    <div class="main-layout">
+      <div>
+        <div class="section">
+          <div class="section-title" style="justify-content:space-between">
+            <span><span class="icon">📡</span> 代理节点 (<span id="proxyCount">0</span>)</span>
+            <button class="btn btn-outline btn-small" onclick="showAddForm()">+ 手动添加</button>
           </div>
-        </div>
-        <div>
-          <div class="section form-section" id="formSection" style="display:none">
-            <div class="section-title" id="formTitle">添加节点</div>
-            <div id="formContainer"></div>
-          </div>
+          <div id="proxyGrid" class="proxy-grid"></div>
         </div>
       </div>
-
-      <!-- Proxy Groups -->
-      <div class="section">
-        <div class="section-title" style="justify-content:space-between">
-          <span><i class="ph-bold ph-folder-notch"></i> 代理组管理</span>
-          <button class="btn btn-outline btn-small" onclick="showCreateGroupDialog()">+ 新建代理组</button>
-        </div>
-        <div id="proxyGroupsList"></div>
-      </div>
-
-      <!-- Export -->
-      <div class="section">
-        <div class="section-title"><i class="ph-bold ph-export"></i> 导出配置</div>
-        <div class="btn-group">
-          <button class="btn btn-success" onclick="exportConfig()">导出 YAML 文件</button>
-          <button class="btn btn-outline" onclick="togglePreview()">预览 YAML</button>
-        </div>
-        <div class="yaml-preview-wrap" id="yamlPreviewWrap">
-          <button class="copy-btn" onclick="copyYaml()">复制</button>
-          <pre class="yaml-preview" id="yamlPreview"></pre>
+      <div>
+        <div class="section form-section" id="formSection" style="display:none">
+          <div class="section-title" id="formTitle">添加节点</div>
+          <div id="formContainer"></div>
         </div>
       </div>
     </div>
+
+    <!-- Proxy Groups -->
+    <div class="section">
+      <div class="section-title" style="justify-content:space-between">
+        <span><span class="icon">📂</span> 代理组管理</span>
+        <button class="btn btn-outline btn-small" onclick="showCreateGroupDialog()">+ 新建代理组</button>
+      </div>
+      <div id="proxyGroupsList"></div>
+    </div>
+
+    <!-- Export -->
+    <div class="section">
+      <div class="section-title"><span class="icon">📤</span> 导出配置</div>
+      <div class="btn-group">
+        <button class="btn btn-success" onclick="exportConfig()">导出 YAML 文件</button>
+        <button class="btn btn-outline" onclick="togglePreview()">预览 YAML</button>
+      </div>
+      <div class="yaml-preview-wrap" id="yamlPreviewWrap">
+        <button class="copy-btn" onclick="copyYaml()">复制</button>
+        <pre class="yaml-preview" id="yamlPreview"></pre>
+      </div>
+    </div>
   </div>
+</div>
 
-  <!-- Modal container -->
-  <div id="modalContainer"></div>
+<!-- Modal container -->
+<div id="modalContainer"></div>
 
-  <script>
-    // ========== Global State ==========
-    const AppState = {
-      rawConfig: null,
-      proxies: [],
-      proxyGroups: [],
-      proxyProviders: {},
-      editingIndex: -1,
-      preservedKeys: {}
-    };
+<script>
+// ========== Global State ==========
+const AppState = {
+  rawConfig: null,
+  proxies: [],
+  proxyGroups: [],
+  proxyProviders: {},
+  editingIndex: -1,
+  preservedKeys: {}
+};
 
-    // ========== Toast ==========
-    function toast(msg, type = 'success') {
-      const t = document.createElement('div');
-      t.className = 'toast ' + type;
-      t.textContent = msg;
-      document.body.appendChild(t);
-      setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 2500);
-    }
+// ========== Toast ==========
+function toast(msg, type='success') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 2500);
+}
 
-    // ========== Modal ==========
-    function showModal(title, message, onConfirm) {
-      const c = document.getElementById('modalContainer');
-      c.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+// ========== Modal ==========
+function showModal(title, message, onConfirm) {
+  const c = document.getElementById('modalContainer');
+  c.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
     <div class="modal">
       <h3>${title}</h3>
       <p>${message}</p>
@@ -951,214 +568,214 @@
       </div>
     </div>
   </div>`;
-      document.getElementById('modalConfirmBtn').onclick = () => { closeModal(); onConfirm(); };
-    }
-    function closeModal() { document.getElementById('modalContainer').innerHTML = ''; }
+  document.getElementById('modalConfirmBtn').onclick = () => { closeModal(); onConfirm(); };
+}
+function closeModal() { document.getElementById('modalContainer').innerHTML = ''; }
 
-    // ========== Import ==========
-    function loadFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => { document.getElementById('importText').value = ev.target.result; parseConfig(); };
-      reader.readAsText(file);
-    }
+// ========== Import ==========
+function loadFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { document.getElementById('importText').value = ev.target.result; parseConfig(); };
+  reader.readAsText(file);
+}
 
-    function parseConfig() {
-      const text = document.getElementById('importText').value.trim();
-      if (!text) { toast('请先粘贴或上传配置内容', 'error'); return; }
-      try {
-        const doc = jsyaml.load(text);
-        if (!doc || typeof doc !== 'object') throw new Error('无效的 YAML');
-        AppState.rawConfig = doc;
-        AppState.proxies = Array.isArray(doc.proxies) ? doc.proxies : [];
-        AppState.proxyGroups = Array.isArray(doc['proxy-groups']) ? doc['proxy-groups'] : [];
-        AppState.proxyProviders = doc['proxy-providers'] || {};
-        toast('配置解析成功！');
-        showEditor();
-      } catch (e) {
-        toast('解析失败: ' + e.message, 'error');
-      }
-    }
+function parseConfig() {
+  const text = document.getElementById('importText').value.trim();
+  if (!text) { toast('请先粘贴或上传配置内容', 'error'); return; }
+  try {
+    const doc = jsyaml.load(text);
+    if (!doc || typeof doc !== 'object') throw new Error('无效的 YAML');
+    AppState.rawConfig = doc;
+    AppState.proxies = Array.isArray(doc.proxies) ? doc.proxies : [];
+    AppState.proxyGroups = Array.isArray(doc['proxy-groups']) ? doc['proxy-groups'] : [];
+    AppState.proxyProviders = doc['proxy-providers'] || {};
+    toast('配置解析成功！');
+    showEditor();
+  } catch(e) {
+    toast('解析失败: ' + e.message, 'error');
+  }
+}
 
-    function startEmpty() {
-      AppState.rawConfig = {};
-      AppState.proxies = [];
-      AppState.proxyGroups = [];
-      AppState.proxyProviders = {};
-      toast('已创建空配置', 'info');
-      showEditor();
-    }
+function startEmpty() {
+  AppState.rawConfig = {};
+  AppState.proxies = [];
+  AppState.proxyGroups = [];
+  AppState.proxyProviders = {};
+  toast('已创建空配置', 'info');
+  showEditor();
+}
 
-    function showEditor() {
-      document.getElementById('importSection').classList.add('hidden');
-      document.getElementById('editorArea').classList.remove('hidden');
-      renderAll();
-    }
+function showEditor() {
+  document.getElementById('importSection').classList.add('hidden');
+  document.getElementById('editorArea').classList.remove('hidden');
+  renderAll();
+}
 
-    function renderAll() {
-      renderProxyCards();
-      renderProxyGroups();
-      renderProviders();
-      renderAirportGroupCheckboxes();
-    }
+function renderAll() {
+  renderProxyCards();
+  renderProxyGroups();
+  renderProviders();
+  renderAirportGroupCheckboxes();
+}
 
-    // ========== Share Link Parsing ==========
-    function parseShareLink(link) {
-      link = link.trim();
-      if (!link) return null;
-      if (link.startsWith('hysteria2://') || link.startsWith('hy2://')) return parseHysteria2Link(link);
-      if (link.startsWith('vless://')) return parseVlessLink(link);
-      if (link.startsWith('vmess://')) return parseVmessLink(link);
-      if (link.startsWith('trojan://')) return parseTrojanLink(link);
-      if (link.startsWith('ss://')) return parseSsLink(link);
-      return null;
-    }
+// ========== Share Link Parsing ==========
+function parseShareLink(link) {
+  link = link.trim();
+  if (!link) return null;
+  if (link.startsWith('hysteria2://') || link.startsWith('hy2://')) return parseHysteria2Link(link);
+  if (link.startsWith('vless://')) return parseVlessLink(link);
+  if (link.startsWith('vmess://')) return parseVmessLink(link);
+  if (link.startsWith('trojan://')) return parseTrojanLink(link);
+  if (link.startsWith('ss://')) return parseSsLink(link);
+  return null;
+}
 
-    function parseHysteria2Link(link) {
-      try {
-        const normalized = link.replace(/^hy2:\/\//, 'hysteria2://');
-        const url = new URL(normalized);
-        const params = url.searchParams;
-        const node = { type: 'hysteria2', name: decodeURIComponent(url.hash.slice(1)) || 'Hysteria2节点', server: url.hostname, port: parseInt(url.port) || 443, password: decodeURIComponent(url.username) };
-        if (params.get('sni')) node.sni = params.get('sni');
-        if (params.get('insecure') === '1') node['skip-cert-verify'] = true;
-        if (params.get('obfs')) node.obfs = params.get('obfs');
-        if (params.get('obfs-password')) node['obfs-password'] = params.get('obfs-password');
-        return node;
-      } catch (e) { return null; }
-    }
+function parseHysteria2Link(link) {
+  try {
+    const normalized = link.replace(/^hy2:\/\//, 'hysteria2://');
+    const url = new URL(normalized);
+    const params = url.searchParams;
+    const node = { type: 'hysteria2', name: decodeURIComponent(url.hash.slice(1)) || 'Hysteria2节点', server: url.hostname, port: parseInt(url.port) || 443, password: decodeURIComponent(url.username) };
+    if (params.get('sni')) node.sni = params.get('sni');
+    if (params.get('insecure') === '1') node['skip-cert-verify'] = true;
+    if (params.get('obfs')) node.obfs = params.get('obfs');
+    if (params.get('obfs-password')) node['obfs-password'] = params.get('obfs-password');
+    return node;
+  } catch(e) { return null; }
+}
 
-    function parseVlessLink(link) {
-      try {
-        const url = new URL(link);
-        const params = url.searchParams;
-        const node = { type: 'vless', name: decodeURIComponent(url.hash.slice(1)) || 'VLESS节点', server: url.hostname, port: parseInt(url.port) || 443, uuid: decodeURIComponent(url.username), udp: true };
-        const security = params.get('security') || 'none';
-        if (security === 'tls' || security === 'reality') node.tls = true;
-        if (params.get('sni')) node.servername = params.get('sni');
-        if (params.get('fp')) node['client-fingerprint'] = params.get('fp');
-        if (params.get('flow')) node.flow = params.get('flow');
-        const netType = params.get('type') || 'tcp';
-        if (netType !== 'tcp') node.network = netType;
-        if (security === 'reality') {
-          node['reality-opts'] = {};
-          if (params.get('pbk')) node['reality-opts']['public-key'] = params.get('pbk');
-          if (params.get('sid')) node['reality-opts']['short-id'] = params.get('sid');
-        }
-        if (netType === 'ws') {
-          node['ws-opts'] = {};
-          if (params.get('path')) node['ws-opts'].path = params.get('path');
-          if (params.get('host')) node['ws-opts'].headers = { Host: params.get('host') };
-        }
-        if (netType === 'grpc') {
-          node['grpc-opts'] = {};
-          if (params.get('serviceName')) node['grpc-opts']['grpc-service-name'] = params.get('serviceName');
-        }
-        if (params.get('insecure') === '1') node['skip-cert-verify'] = true;
-        return node;
-      } catch (e) { return null; }
+function parseVlessLink(link) {
+  try {
+    const url = new URL(link);
+    const params = url.searchParams;
+    const node = { type: 'vless', name: decodeURIComponent(url.hash.slice(1)) || 'VLESS节点', server: url.hostname, port: parseInt(url.port) || 443, uuid: decodeURIComponent(url.username), udp: true };
+    const security = params.get('security') || 'none';
+    if (security === 'tls' || security === 'reality') node.tls = true;
+    if (params.get('sni')) node.servername = params.get('sni');
+    if (params.get('fp')) node['client-fingerprint'] = params.get('fp');
+    if (params.get('flow')) node.flow = params.get('flow');
+    const netType = params.get('type') || 'tcp';
+    if (netType !== 'tcp') node.network = netType;
+    if (security === 'reality') {
+      node['reality-opts'] = {};
+      if (params.get('pbk')) node['reality-opts']['public-key'] = params.get('pbk');
+      if (params.get('sid')) node['reality-opts']['short-id'] = params.get('sid');
     }
-
-    function parseVmessLink(link) {
-      try {
-        const b64 = link.replace('vmess://', '');
-        const decoded = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
-        const json = JSON.parse(decoded);
-        const node = { type: 'vmess', name: json.ps || 'VMess节点', server: json.add, port: parseInt(json.port), uuid: json.id, alterId: parseInt(json.aid) || 0, cipher: json.scy || 'auto' };
-        if (json.net && json.net !== 'tcp') node.network = json.net;
-        if (json.tls === 'tls') { node.tls = true; if (json.sni) node.servername = json.sni; }
-        if (json['skip-cert-verify']) node['skip-cert-verify'] = true;
-        if (json.net === 'ws') {
-          node['ws-opts'] = {};
-          if (json.path) node['ws-opts'].path = json.path;
-          if (json.host) node['ws-opts'].headers = { Host: json.host };
-        }
-        if (json.fp) node['client-fingerprint'] = json.fp;
-        return node;
-      } catch (e) { return null; }
+    if (netType === 'ws') {
+      node['ws-opts'] = {};
+      if (params.get('path')) node['ws-opts'].path = params.get('path');
+      if (params.get('host')) node['ws-opts'].headers = { Host: params.get('host') };
     }
-
-    function parseTrojanLink(link) {
-      try {
-        const url = new URL(link);
-        const params = url.searchParams;
-        const node = { type: 'trojan', name: decodeURIComponent(url.hash.slice(1)) || 'Trojan节点', server: url.hostname, port: parseInt(url.port) || 443, password: decodeURIComponent(url.username) };
-        if (params.get('sni')) node.sni = params.get('sni');
-        if (params.get('insecure') === '1' || params.get('allowInsecure') === '1') node['skip-cert-verify'] = true;
-        const netType = params.get('type') || 'tcp';
-        if (netType !== 'tcp') node.network = netType;
-        if (netType === 'ws') {
-          node['ws-opts'] = {};
-          if (params.get('path')) node['ws-opts'].path = params.get('path');
-          if (params.get('host')) node['ws-opts'].headers = { Host: params.get('host') };
-        }
-        return node;
-      } catch (e) { return null; }
+    if (netType === 'grpc') {
+      node['grpc-opts'] = {};
+      if (params.get('serviceName')) node['grpc-opts']['grpc-service-name'] = params.get('serviceName');
     }
+    if (params.get('insecure') === '1') node['skip-cert-verify'] = true;
+    return node;
+  } catch(e) { return null; }
+}
 
-    function parseSsLink(link) {
-      try {
-        let rest = link.replace('ss://', '');
-        let name = '';
-        const hashIdx = rest.indexOf('#');
-        if (hashIdx !== -1) { name = decodeURIComponent(rest.slice(hashIdx + 1)); rest = rest.slice(0, hashIdx); }
-        // SIP002 format: base64(method:password)@host:port
-        const atIdx = rest.indexOf('@');
-        let method, password, server, port;
-        if (atIdx !== -1) {
-          const userinfo = rest.slice(0, atIdx);
-          const hostport = rest.slice(atIdx + 1).split('?')[0];
-          let decoded;
-          try { decoded = atob(userinfo.replace(/-/g, '+').replace(/_/g, '/')); } catch (e) { decoded = decodeURIComponent(userinfo); }
-          const colonIdx = decoded.indexOf(':');
-          method = decoded.slice(0, colonIdx);
-          password = decoded.slice(colonIdx + 1);
-          const lastColon = hostport.lastIndexOf(':');
-          server = hostport.slice(0, lastColon);
-          port = parseInt(hostport.slice(lastColon + 1));
-        } else {
-          // Legacy format: base64(method:password@host:port)
-          let decoded;
-          try { decoded = atob(rest.replace(/-/g, '+').replace(/_/g, '/')); } catch (e) { decoded = rest; }
-          const atIdx2 = decoded.indexOf('@');
-          const colonIdx = decoded.indexOf(':');
-          method = decoded.slice(0, colonIdx);
-          password = decoded.slice(colonIdx + 1, atIdx2);
-          const hostport = decoded.slice(atIdx2 + 1);
-          const lastColon = hostport.lastIndexOf(':');
-          server = hostport.slice(0, lastColon);
-          port = parseInt(hostport.slice(lastColon + 1));
-        }
-        return { type: 'ss', name: name || 'SS节点', server, port, cipher: method, password };
-      } catch (e) { return null; }
+function parseVmessLink(link) {
+  try {
+    const b64 = link.replace('vmess://', '');
+    const decoded = atob(b64.replace(/-/g,'+').replace(/_/g,'/'));
+    const json = JSON.parse(decoded);
+    const node = { type: 'vmess', name: json.ps || 'VMess节点', server: json.add, port: parseInt(json.port), uuid: json.id, alterId: parseInt(json.aid) || 0, cipher: json.scy || 'auto' };
+    if (json.net && json.net !== 'tcp') node.network = json.net;
+    if (json.tls === 'tls') { node.tls = true; if (json.sni) node.servername = json.sni; }
+    if (json['skip-cert-verify']) node['skip-cert-verify'] = true;
+    if (json.net === 'ws') {
+      node['ws-opts'] = {};
+      if (json.path) node['ws-opts'].path = json.path;
+      if (json.host) node['ws-opts'].headers = { Host: json.host };
     }
+    if (json.fp) node['client-fingerprint'] = json.fp;
+    return node;
+  } catch(e) { return null; }
+}
 
-    // ========== Link Parsing UI ==========
-    function parseLinks() {
-      const text = document.getElementById('linkInput').value.trim();
-      if (!text) { toast('请先粘贴节点链接', 'error'); return; }
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      const results = [];
-      lines.forEach((line, i) => {
-        const node = parseShareLink(line);
-        results.push({ line, node, index: i });
-      });
-      renderLinkResults(results);
+function parseTrojanLink(link) {
+  try {
+    const url = new URL(link);
+    const params = url.searchParams;
+    const node = { type: 'trojan', name: decodeURIComponent(url.hash.slice(1)) || 'Trojan节点', server: url.hostname, port: parseInt(url.port) || 443, password: decodeURIComponent(url.username) };
+    if (params.get('sni')) node.sni = params.get('sni');
+    if (params.get('insecure') === '1' || params.get('allowInsecure') === '1') node['skip-cert-verify'] = true;
+    const netType = params.get('type') || 'tcp';
+    if (netType !== 'tcp') node.network = netType;
+    if (netType === 'ws') {
+      node['ws-opts'] = {};
+      if (params.get('path')) node['ws-opts'].path = params.get('path');
+      if (params.get('host')) node['ws-opts'].headers = { Host: params.get('host') };
     }
+    return node;
+  } catch(e) { return null; }
+}
 
-    function renderLinkResults(results) {
-      const container = document.getElementById('linkResults');
-      if (!results.length) { container.innerHTML = ''; return; }
-      let html = '<div style="margin-bottom:12px;font-size:.9em;color:var(--text2)">识别到 ' + results.filter(r => r.node).length + ' / ' + results.length + ' 个节点</div>';
-      results.forEach((r, idx) => {
-        if (!r.node) {
-          html += `<div class="link-card error"><div class="link-card-header"><span class="badge badge-error">失败</span><span style="font-size:.85em;color:var(--danger)">无法识别: ${escHtml(r.line.substring(0, 60))}...</span></div></div>`;
-          return;
-        }
-        const n = r.node;
-        const typeClass = n.type === 'hy2' ? 'hysteria2' : n.type;
-        html += `<div class="link-card" data-result-idx="${idx}">
+function parseSsLink(link) {
+  try {
+    let rest = link.replace('ss://', '');
+    let name = '';
+    const hashIdx = rest.indexOf('#');
+    if (hashIdx !== -1) { name = decodeURIComponent(rest.slice(hashIdx + 1)); rest = rest.slice(0, hashIdx); }
+    // SIP002 format: base64(method:password)@host:port
+    const atIdx = rest.indexOf('@');
+    let method, password, server, port;
+    if (atIdx !== -1) {
+      const userinfo = rest.slice(0, atIdx);
+      const hostport = rest.slice(atIdx + 1).split('?')[0];
+      let decoded;
+      try { decoded = atob(userinfo.replace(/-/g,'+').replace(/_/g,'/')); } catch(e) { decoded = decodeURIComponent(userinfo); }
+      const colonIdx = decoded.indexOf(':');
+      method = decoded.slice(0, colonIdx);
+      password = decoded.slice(colonIdx + 1);
+      const lastColon = hostport.lastIndexOf(':');
+      server = hostport.slice(0, lastColon);
+      port = parseInt(hostport.slice(lastColon + 1));
+    } else {
+      // Legacy format: base64(method:password@host:port)
+      let decoded;
+      try { decoded = atob(rest.replace(/-/g,'+').replace(/_/g,'/')); } catch(e) { decoded = rest; }
+      const atIdx2 = decoded.indexOf('@');
+      const colonIdx = decoded.indexOf(':');
+      method = decoded.slice(0, colonIdx);
+      password = decoded.slice(colonIdx + 1, atIdx2);
+      const hostport = decoded.slice(atIdx2 + 1);
+      const lastColon = hostport.lastIndexOf(':');
+      server = hostport.slice(0, lastColon);
+      port = parseInt(hostport.slice(lastColon + 1));
+    }
+    return { type: 'ss', name: name || 'SS节点', server, port, cipher: method, password };
+  } catch(e) { return null; }
+}
+
+// ========== Link Parsing UI ==========
+function parseLinks() {
+  const text = document.getElementById('linkInput').value.trim();
+  if (!text) { toast('请先粘贴节点链接', 'error'); return; }
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const results = [];
+  lines.forEach((line, i) => {
+    const node = parseShareLink(line);
+    results.push({ line, node, index: i });
+  });
+  renderLinkResults(results);
+}
+
+function renderLinkResults(results) {
+  const container = document.getElementById('linkResults');
+  if (!results.length) { container.innerHTML = ''; return; }
+  let html = '<div style="margin-bottom:12px;font-size:.9em;color:var(--text2)">识别到 ' + results.filter(r=>r.node).length + ' / ' + results.length + ' 个节点</div>';
+  results.forEach((r, idx) => {
+    if (!r.node) {
+      html += `<div class="link-card error"><div class="link-card-header"><span class="badge badge-error">失败</span><span style="font-size:.85em;color:var(--danger)">无法识别: ${escHtml(r.line.substring(0,60))}...</span></div></div>`;
+      return;
+    }
+    const n = r.node;
+    const typeClass = n.type === 'hy2' ? 'hysteria2' : n.type;
+    html += `<div class="link-card" data-result-idx="${idx}">
       <div class="link-card-header">
         <span class="badge badge-${typeClass}">${n.type}</span>
         <strong>${escHtml(n.name)}</strong>
@@ -1170,11 +787,11 @@
       <div class="group-select">
         <div class="group-select-title">加入现有分组：</div>
         <div class="group-checkboxes">`;
-        AppState.proxyGroups.forEach((g, gi) => {
-          html += `<label><input type="checkbox" class="link-group-cb" data-result="${idx}" data-group="${gi}"> ${escHtml(g.name)}</label>`;
-        });
-        if (!AppState.proxyGroups.length) html += '<span style="color:var(--text2);font-size:.85em">暂无代理组</span>';
-        html += `</div>
+    AppState.proxyGroups.forEach((g, gi) => {
+      html += `<label><input type="checkbox" class="link-group-cb" data-result="${idx}" data-group="${gi}"> ${escHtml(g.name)}</label>`;
+    });
+    if (!AppState.proxyGroups.length) html += '<span style="color:var(--text2);font-size:.85em">暂无代理组</span>';
+    html += `</div>
         <button class="new-group-toggle" onclick="toggleNewGroupInLink(${idx})">+ 新建分组并加入</button>
         <div class="new-group-form hidden" id="newGroupForm_${idx}">
           <div class="form-row">
@@ -1183,88 +800,88 @@
           </div>
           <div class="form-row">
             <select id="newGroupParent_${idx}"><option value="">不嵌套</option>`;
-        AppState.proxyGroups.forEach((g, gi) => { html += `<option value="${gi}">${escHtml(g.name)}</option>`; });
-        html += `</select>
+    AppState.proxyGroups.forEach((g, gi) => { html += `<option value="${gi}">${escHtml(g.name)}</option>`; });
+    html += `</select>
           </div>
         </div>
       </div>
     </div>`;
-      });
-      html += `<div style="margin-top:16px"><button class="btn btn-success" onclick="confirmAddLinks()">确认添加</button></div>`;
-      container.innerHTML = html;
-      // Store results for later
-      container._results = results;
-    }
+  });
+  html += `<div style="margin-top:16px"><button class="btn btn-success" onclick="confirmAddLinks()">确认添加</button></div>`;
+  container.innerHTML = html;
+  // Store results for later
+  container._results = results;
+}
 
-    function toggleNewGroupInLink(idx) {
-      const el = document.getElementById('newGroupForm_' + idx);
-      el.classList.toggle('hidden');
-    }
+function toggleNewGroupInLink(idx) {
+  const el = document.getElementById('newGroupForm_' + idx);
+  el.classList.toggle('hidden');
+}
 
-    function confirmAddLinks() {
-      const container = document.getElementById('linkResults');
-      const results = container._results;
-      if (!results) return;
-      let addedCount = 0;
-      results.forEach((r, idx) => {
-        if (!r.node) return;
-        const node = r.node;
-        AppState.proxies.push(node);
-        addedCount++;
-        // Add to checked groups
-        document.querySelectorAll(`.link-group-cb[data-result="${idx}"]:checked`).forEach(cb => {
-          const gi = parseInt(cb.dataset.group);
-          if (AppState.proxyGroups[gi]) {
-            if (!AppState.proxyGroups[gi].proxies) AppState.proxyGroups[gi].proxies = [];
-            if (!AppState.proxyGroups[gi].proxies.includes(node.name)) {
-              AppState.proxyGroups[gi].proxies.push(node.name);
-            }
-          }
-        });
-        // Create new group if specified
-        const nameEl = document.getElementById('newGroupName_' + idx);
-        const typeEl = document.getElementById('newGroupType_' + idx);
-        const parentEl = document.getElementById('newGroupParent_' + idx);
-        if (nameEl && nameEl.value.trim()) {
-          const newGroup = { name: nameEl.value.trim(), type: typeEl.value, proxies: [node.name] };
-          if (typeEl.value === 'url-test' || typeEl.value === 'fallback') {
-            newGroup.url = 'http://www.gstatic.com/generate_204';
-            newGroup.interval = 300;
-          }
-          AppState.proxyGroups.push(newGroup);
-          // Nest into parent if selected
-          if (parentEl.value !== '') {
-            const pi = parseInt(parentEl.value);
-            if (AppState.proxyGroups[pi]) {
-              if (!AppState.proxyGroups[pi].proxies) AppState.proxyGroups[pi].proxies = [];
-              if (!AppState.proxyGroups[pi].proxies.includes(newGroup.name)) {
-                AppState.proxyGroups[pi].proxies.push(newGroup.name);
-              }
-            }
+function confirmAddLinks() {
+  const container = document.getElementById('linkResults');
+  const results = container._results;
+  if (!results) return;
+  let addedCount = 0;
+  results.forEach((r, idx) => {
+    if (!r.node) return;
+    const node = r.node;
+    AppState.proxies.push(node);
+    addedCount++;
+    // Add to checked groups
+    document.querySelectorAll(`.link-group-cb[data-result="${idx}"]:checked`).forEach(cb => {
+      const gi = parseInt(cb.dataset.group);
+      if (AppState.proxyGroups[gi]) {
+        if (!AppState.proxyGroups[gi].proxies) AppState.proxyGroups[gi].proxies = [];
+        if (!AppState.proxyGroups[gi].proxies.includes(node.name)) {
+          AppState.proxyGroups[gi].proxies.push(node.name);
+        }
+      }
+    });
+    // Create new group if specified
+    const nameEl = document.getElementById('newGroupName_' + idx);
+    const typeEl = document.getElementById('newGroupType_' + idx);
+    const parentEl = document.getElementById('newGroupParent_' + idx);
+    if (nameEl && nameEl.value.trim()) {
+      const newGroup = { name: nameEl.value.trim(), type: typeEl.value, proxies: [node.name] };
+      if (typeEl.value === 'url-test' || typeEl.value === 'fallback') {
+        newGroup.url = 'http://www.gstatic.com/generate_204';
+        newGroup.interval = 300;
+      }
+      AppState.proxyGroups.push(newGroup);
+      // Nest into parent if selected
+      if (parentEl.value !== '') {
+        const pi = parseInt(parentEl.value);
+        if (AppState.proxyGroups[pi]) {
+          if (!AppState.proxyGroups[pi].proxies) AppState.proxyGroups[pi].proxies = [];
+          if (!AppState.proxyGroups[pi].proxies.includes(newGroup.name)) {
+            AppState.proxyGroups[pi].proxies.push(newGroup.name);
           }
         }
-      });
-      if (addedCount) {
-        toast(`成功添加 ${addedCount} 个节点`);
-        document.getElementById('linkInput').value = '';
-        container.innerHTML = '';
-        renderAll();
-      } else {
-        toast('没有可添加的节点', 'error');
       }
     }
+  });
+  if (addedCount) {
+    toast(`成功添加 ${addedCount} 个节点`);
+    document.getElementById('linkInput').value = '';
+    container.innerHTML = '';
+    renderAll();
+  } else {
+    toast('没有可添加的节点', 'error');
+  }
+}
 
-    // ========== Proxy Cards ==========
-    function renderProxyCards() {
-      const grid = document.getElementById('proxyGrid');
-      document.getElementById('proxyCount').textContent = AppState.proxies.length;
-      if (!AppState.proxies.length) {
-        grid.innerHTML = '<div class="empty-state"><p>暂无代理节点</p><p>可以通过上方粘贴链接或手动添加</p></div>';
-        return;
-      }
-      grid.innerHTML = AppState.proxies.map((p, i) => {
-        const t = p.type || 'unknown';
-        return `<div class="proxy-card" data-type="${t}">
+// ========== Proxy Cards ==========
+function renderProxyCards() {
+  const grid = document.getElementById('proxyGrid');
+  document.getElementById('proxyCount').textContent = AppState.proxies.length;
+  if (!AppState.proxies.length) {
+    grid.innerHTML = '<div class="empty-state"><p>暂无代理节点</p><p>可以通过上方粘贴链接或手动添加</p></div>';
+    return;
+  }
+  grid.innerHTML = AppState.proxies.map((p, i) => {
+    const t = p.type || 'unknown';
+    return `<div class="proxy-card" data-type="${t}">
       <div class="proxy-card-name">
         <span>${escHtml(p.name || '未命名')}</span>
         <span class="badge badge-${t === 'hy2' ? 'hysteria2' : t}">${t}</span>
@@ -1275,294 +892,294 @@
         <button class="btn btn-danger btn-small" onclick="deleteProxy(${i})">删除</button>
       </div>
     </div>`;
-      }).join('');
-    }
+  }).join('');
+}
 
-    // ========== Add / Edit Form ==========
-    function showAddForm() {
-      AppState.editingIndex = -1;
-      document.getElementById('formTitle').textContent = '添加节点';
-      document.getElementById('formSection').style.display = '';
-      buildForm('hysteria2');
-    }
+// ========== Add / Edit Form ==========
+function showAddForm() {
+  AppState.editingIndex = -1;
+  document.getElementById('formTitle').textContent = '添加节点';
+  document.getElementById('formSection').style.display = '';
+  buildForm('hysteria2');
+}
 
-    function editProxy(idx) {
-      AppState.editingIndex = idx;
-      const p = AppState.proxies[idx];
-      document.getElementById('formTitle').textContent = '编辑节点';
-      document.getElementById('formSection').style.display = '';
-      buildForm(p.type, p);
-    }
+function editProxy(idx) {
+  AppState.editingIndex = idx;
+  const p = AppState.proxies[idx];
+  document.getElementById('formTitle').textContent = '编辑节点';
+  document.getElementById('formSection').style.display = '';
+  buildForm(p.type, p);
+}
 
-    function buildForm(type, data) {
-      const d = data || {};
-      const isEdit = AppState.editingIndex >= 0;
-      const typeOptions = ['ss', 'vmess', 'trojan', 'hysteria2', 'vless'].map(t =>
-        `<option value="${t}" ${type === t ? 'selected' : ''}>${t}</option>`).join('');
+function buildForm(type, data) {
+  const d = data || {};
+  const isEdit = AppState.editingIndex >= 0;
+  const typeOptions = ['ss','vmess','trojan','hysteria2','vless'].map(t =>
+    `<option value="${t}" ${type===t?'selected':''}>${t}</option>`).join('');
 
-      let html = `<div class="form-group"><label class="required">代理类型</label><select id="f_type" onchange="buildForm(this.value, null)">${typeOptions}</select></div>`;
-      html += `<div class="form-group"><label class="required">名称</label><input id="f_name" value="${escAttr(d.name || '')}"></div>`;
-      html += `<div class="form-group"><label class="required">服务器</label><input id="f_server" value="${escAttr(d.server || '')}"></div>`;
-      html += `<div class="form-group"><label class="required">端口</label><input id="f_port" type="number" value="${d.port || ''}"></div>`;
+  let html = `<div class="form-group"><label class="required">代理类型</label><select id="f_type" onchange="buildForm(this.value, null)">${typeOptions}</select></div>`;
+  html += `<div class="form-group"><label class="required">名称</label><input id="f_name" value="${escAttr(d.name||'')}"></div>`;
+  html += `<div class="form-group"><label class="required">服务器</label><input id="f_server" value="${escAttr(d.server||'')}"></div>`;
+  html += `<div class="form-group"><label class="required">端口</label><input id="f_port" type="number" value="${d.port||''}"></div>`;
 
-      if (type === 'ss') {
-        const ciphers = ['aes-128-gcm', 'aes-256-gcm', 'chacha20-ietf-poly1305', '2022-blake3-aes-128-gcm', '2022-blake3-aes-256-gcm', '2022-blake3-chacha20-poly1305'];
-        html += `<div class="form-group"><label class="required">加密方式</label><select id="f_cipher">${ciphers.map(c => `<option ${d.cipher === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>`;
-        html += `<div class="form-group"><label class="required">密码</label><input id="f_password" value="${escAttr(d.password || '')}"></div>`;
-        html += advancedStart();
-        html += checkboxField('f_udp', 'UDP', d.udp);
-        html += advancedEnd();
-      }
+  if (type === 'ss') {
+    const ciphers = ['aes-128-gcm','aes-256-gcm','chacha20-ietf-poly1305','2022-blake3-aes-128-gcm','2022-blake3-aes-256-gcm','2022-blake3-chacha20-poly1305'];
+    html += `<div class="form-group"><label class="required">加密方式</label><select id="f_cipher">${ciphers.map(c=>`<option ${d.cipher===c?'selected':''}>${c}</option>`).join('')}</select></div>`;
+    html += `<div class="form-group"><label class="required">密码</label><input id="f_password" value="${escAttr(d.password||'')}"></div>`;
+    html += advancedStart();
+    html += checkboxField('f_udp', 'UDP', d.udp);
+    html += advancedEnd();
+  }
 
-      if (type === 'vmess') {
-        html += `<div class="form-group"><label class="required">UUID</label><input id="f_uuid" value="${escAttr(d.uuid || '')}"></div>`;
-        html += `<div class="form-group"><label>alterId</label><input id="f_alterId" type="number" value="${d.alterId || 0}"></div>`;
-        const vmCiphers = ['auto', 'aes-128-gcm', 'chacha20-poly1305', 'none'];
-        html += `<div class="form-group"><label>加密方式</label><select id="f_cipher">${vmCiphers.map(c => `<option ${d.cipher === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>`;
-        html += advancedStart();
-        html += checkboxField('f_tls', 'TLS', d.tls);
-        html += checkboxField('f_skip_cert', '跳过证书验证', d['skip-cert-verify']);
-        html += `<div class="form-group"><label>servername (SNI)</label><input id="f_servername" value="${escAttr(d.servername || '')}"></div>`;
-        html += networkFields(d);
-        html += advancedEnd();
-      }
+  if (type === 'vmess') {
+    html += `<div class="form-group"><label class="required">UUID</label><input id="f_uuid" value="${escAttr(d.uuid||'')}"></div>`;
+    html += `<div class="form-group"><label>alterId</label><input id="f_alterId" type="number" value="${d.alterId||0}"></div>`;
+    const vmCiphers = ['auto','aes-128-gcm','chacha20-poly1305','none'];
+    html += `<div class="form-group"><label>加密方式</label><select id="f_cipher">${vmCiphers.map(c=>`<option ${d.cipher===c?'selected':''}>${c}</option>`).join('')}</select></div>`;
+    html += advancedStart();
+    html += checkboxField('f_tls', 'TLS', d.tls);
+    html += checkboxField('f_skip_cert', '跳过证书验证', d['skip-cert-verify']);
+    html += `<div class="form-group"><label>servername (SNI)</label><input id="f_servername" value="${escAttr(d.servername||'')}"></div>`;
+    html += networkFields(d);
+    html += advancedEnd();
+  }
 
-      if (type === 'trojan') {
-        html += `<div class="form-group"><label class="required">密码</label><input id="f_password" value="${escAttr(d.password || '')}"></div>`;
-        html += advancedStart();
-        html += `<div class="form-group"><label>SNI</label><input id="f_sni" value="${escAttr(d.sni || '')}"></div>`;
-        html += checkboxField('f_skip_cert', '跳过证书验证', d['skip-cert-verify']);
-        html += networkFields(d);
-        html += advancedEnd();
-      }
+  if (type === 'trojan') {
+    html += `<div class="form-group"><label class="required">密码</label><input id="f_password" value="${escAttr(d.password||'')}"></div>`;
+    html += advancedStart();
+    html += `<div class="form-group"><label>SNI</label><input id="f_sni" value="${escAttr(d.sni||'')}"></div>`;
+    html += checkboxField('f_skip_cert', '跳过证书验证', d['skip-cert-verify']);
+    html += networkFields(d);
+    html += advancedEnd();
+  }
 
-      if (type === 'hysteria2') {
-        html += `<div class="form-group"><label class="required">密码</label><input id="f_password" value="${escAttr(d.password || '')}"></div>`;
-        html += advancedStart();
-        html += `<div class="form-group"><label>SNI</label><input id="f_sni" value="${escAttr(d.sni || '')}"></div>`;
-        html += checkboxField('f_skip_cert', '跳过证书验证', d['skip-cert-verify']);
-        html += checkboxField('f_udp', 'UDP', d.udp);
-        html += `<div class="form-group"><label>上行带宽 (up)</label><input id="f_up" value="${escAttr(d.up || '')}"></div>`;
-        html += `<div class="form-group"><label>下行带宽 (down)</label><input id="f_down" value="${escAttr(d.down || '')}"></div>`;
-        html += `<div class="form-group"><label>obfs</label><input id="f_obfs" value="${escAttr(d.obfs || '')}"></div>`;
-        html += `<div class="form-group"><label>obfs-password</label><input id="f_obfs_password" value="${escAttr(d['obfs-password'] || '')}"></div>`;
-        html += advancedEnd();
-      }
+  if (type === 'hysteria2') {
+    html += `<div class="form-group"><label class="required">密码</label><input id="f_password" value="${escAttr(d.password||'')}"></div>`;
+    html += advancedStart();
+    html += `<div class="form-group"><label>SNI</label><input id="f_sni" value="${escAttr(d.sni||'')}"></div>`;
+    html += checkboxField('f_skip_cert', '跳过证书验证', d['skip-cert-verify']);
+    html += checkboxField('f_udp', 'UDP', d.udp);
+    html += `<div class="form-group"><label>上行带宽 (up)</label><input id="f_up" value="${escAttr(d.up||'')}"></div>`;
+    html += `<div class="form-group"><label>下行带宽 (down)</label><input id="f_down" value="${escAttr(d.down||'')}"></div>`;
+    html += `<div class="form-group"><label>obfs</label><input id="f_obfs" value="${escAttr(d.obfs||'')}"></div>`;
+    html += `<div class="form-group"><label>obfs-password</label><input id="f_obfs_password" value="${escAttr(d['obfs-password']||'')}"></div>`;
+    html += advancedEnd();
+  }
 
-      if (type === 'vless') {
-        html += `<div class="form-group"><label class="required">UUID</label><input id="f_uuid" value="${escAttr(d.uuid || '')}"></div>`;
-        html += advancedStart();
-        const flows = ['', 'xtls-rprx-vision', 'xtls-rprx-direct'];
-        html += `<div class="form-group"><label>Flow</label><select id="f_flow">${flows.map(f => `<option value="${f}" ${d.flow === f ? 'selected' : ''}>${f || '无'}</option>`).join('')}</select></div>`;
-        html += checkboxField('f_tls', 'TLS', d.tls);
-        html += `<div class="form-group"><label>servername (SNI)</label><input id="f_servername" value="${escAttr(d.servername || '')}"></div>`;
-        const fps = ['', 'chrome', 'firefox', 'safari', 'ios', 'android', 'edge', '360', 'qq', 'random', 'randomized'];
-        html += `<div class="form-group"><label>client-fingerprint</label><select id="f_fp">${fps.map(f => `<option value="${f}" ${d['client-fingerprint'] === f ? 'selected' : ''}>${f || '默认'}</option>`).join('')}</select></div>`;
-        html += checkboxField('f_udp', 'UDP', d.udp !== false);
-        html += networkFields(d);
-        html += `<div class="form-group"><label>Reality public-key</label><input id="f_reality_pk" value="${escAttr((d['reality-opts'] || {})['public-key'] || '')}"></div>`;
-        html += `<div class="form-group"><label>Reality short-id</label><input id="f_reality_sid" value="${escAttr((d['reality-opts'] || {})['short-id'] || '')}"></div>`;
-        html += advancedEnd();
-      }
+  if (type === 'vless') {
+    html += `<div class="form-group"><label class="required">UUID</label><input id="f_uuid" value="${escAttr(d.uuid||'')}"></div>`;
+    html += advancedStart();
+    const flows = ['', 'xtls-rprx-vision', 'xtls-rprx-direct'];
+    html += `<div class="form-group"><label>Flow</label><select id="f_flow">${flows.map(f=>`<option value="${f}" ${d.flow===f?'selected':''}>${f||'无'}</option>`).join('')}</select></div>`;
+    html += checkboxField('f_tls', 'TLS', d.tls);
+    html += `<div class="form-group"><label>servername (SNI)</label><input id="f_servername" value="${escAttr(d.servername||'')}"></div>`;
+    const fps = ['','chrome','firefox','safari','ios','android','edge','360','qq','random','randomized'];
+    html += `<div class="form-group"><label>client-fingerprint</label><select id="f_fp">${fps.map(f=>`<option value="${f}" ${d['client-fingerprint']===f?'selected':''}>${f||'默认'}</option>`).join('')}</select></div>`;
+    html += checkboxField('f_udp', 'UDP', d.udp !== false);
+    html += networkFields(d);
+    html += `<div class="form-group"><label>Reality public-key</label><input id="f_reality_pk" value="${escAttr((d['reality-opts']||{})['public-key']||'')}"></div>`;
+    html += `<div class="form-group"><label>Reality short-id</label><input id="f_reality_sid" value="${escAttr((d['reality-opts']||{})['short-id']||'')}"></div>`;
+    html += advancedEnd();
+  }
 
-      // Group selection for save
-      html += `<div class="form-group-select">
+  // Group selection for save
+  html += `<div class="form-group-select">
     <div style="font-size:.85em;font-weight:600;margin-bottom:8px;color:var(--text2)">保存后加入分组（可选）：</div>
     <div class="group-checkboxes">`;
-      AppState.proxyGroups.forEach((g, gi) => {
-        const checked = isEdit && g.proxies && g.proxies.includes(d.name) ? 'checked' : '';
-        html += `<label><input type="checkbox" class="form-group-cb" data-group="${gi}" ${checked}> ${escHtml(g.name)}</label>`;
-      });
-      html += `</div></div>`;
-      html += `<div style="margin-top:16px" class="btn-group">
+  AppState.proxyGroups.forEach((g, gi) => {
+    const checked = isEdit && g.proxies && g.proxies.includes(d.name) ? 'checked' : '';
+    html += `<label><input type="checkbox" class="form-group-cb" data-group="${gi}" ${checked}> ${escHtml(g.name)}</label>`;
+  });
+  html += `</div></div>`;
+  html += `<div style="margin-top:16px" class="btn-group">
     <button class="btn btn-primary" onclick="saveProxy()">保存</button>
     <button class="btn btn-outline" onclick="cancelForm()">取消</button>
   </div>`;
 
-      document.getElementById('formContainer').innerHTML = html;
+  document.getElementById('formContainer').innerHTML = html;
+}
+
+function advancedStart() {
+  return `<button class="advanced-toggle" onclick="this.nextElementSibling.classList.toggle('show');this.textContent=this.nextElementSibling.classList.contains('show')?'▼ 收起高级选项':'▶ 高级选项'">▶ 高级选项</button><div class="advanced-fields">`;
+}
+function advancedEnd() { return '</div>'; }
+
+function checkboxField(id, label, checked) {
+  return `<div class="form-group"><label><input type="checkbox" id="${id}" ${checked?'checked':''} style="width:auto;margin-right:6px"> ${label}</label></div>`;
+}
+
+function networkFields(d) {
+  const nets = ['tcp','ws','grpc','h2'];
+  const curNet = d.network || 'tcp';
+  let html = `<div class="form-group"><label>传输方式</label><select id="f_network">${nets.map(n=>`<option value="${n}" ${curNet===n?'selected':''}>${n}</option>`).join('')}</select></div>`;
+  html += `<div class="form-group"><label>ws-opts path</label><input id="f_ws_path" value="${escAttr((d['ws-opts']||{}).path||'')}"></div>`;
+  html += `<div class="form-group"><label>ws-opts host</label><input id="f_ws_host" value="${escAttr(((d['ws-opts']||{}).headers||{}).Host||'')}"></div>`;
+  return html;
+}
+
+function cancelForm() {
+  document.getElementById('formSection').style.display = 'none';
+  AppState.editingIndex = -1;
+}
+
+function saveProxy() {
+  const type = val('f_type');
+  const name = val('f_name');
+  const server = val('f_server');
+  const port = intVal('f_port');
+  if (!name || !server || !port) { toast('请填写名称、服务器和端口', 'error'); return; }
+
+  const node = { type, name, server, port };
+  const isEdit = AppState.editingIndex >= 0;
+  const oldName = isEdit ? AppState.proxies[AppState.editingIndex].name : null;
+
+  // Preserve unknown fields from original node when editing
+  if (isEdit) {
+    const orig = AppState.proxies[AppState.editingIndex];
+    Object.keys(orig).forEach(k => {
+      if (!(k in node)) node[k] = orig[k];
+    });
+  }
+
+  if (type === 'ss') {
+    node.cipher = val('f_cipher'); node.password = val('f_password');
+    if (el('f_udp') && el('f_udp').checked) node.udp = true;
+  }
+  if (type === 'vmess') {
+    node.uuid = val('f_uuid'); node.alterId = intVal('f_alterId') || 0; node.cipher = val('f_cipher');
+    if (el('f_tls') && el('f_tls').checked) node.tls = true;
+    if (el('f_skip_cert') && el('f_skip_cert').checked) node['skip-cert-verify'] = true;
+    if (val('f_servername')) node.servername = val('f_servername');
+    applyNetworkFields(node);
+  }
+  if (type === 'trojan') {
+    node.password = val('f_password');
+    if (val('f_sni')) node.sni = val('f_sni');
+    if (el('f_skip_cert') && el('f_skip_cert').checked) node['skip-cert-verify'] = true;
+    applyNetworkFields(node);
+  }
+  if (type === 'hysteria2') {
+    node.password = val('f_password');
+    if (val('f_sni')) node.sni = val('f_sni');
+    if (el('f_skip_cert') && el('f_skip_cert').checked) node['skip-cert-verify'] = true;
+    if (el('f_udp') && el('f_udp').checked) node.udp = true;
+    if (val('f_up')) node.up = val('f_up');
+    if (val('f_down')) node.down = val('f_down');
+    if (val('f_obfs')) node.obfs = val('f_obfs');
+    if (val('f_obfs_password')) node['obfs-password'] = val('f_obfs_password');
+  }
+  if (type === 'vless') {
+    node.uuid = val('f_uuid');
+    if (val('f_flow')) node.flow = val('f_flow');
+    if (el('f_tls') && el('f_tls').checked) node.tls = true;
+    if (val('f_servername')) node.servername = val('f_servername');
+    if (val('f_fp')) node['client-fingerprint'] = val('f_fp');
+    if (el('f_udp') && el('f_udp').checked) node.udp = true;
+    applyNetworkFields(node);
+    if (val('f_reality_pk')) {
+      node['reality-opts'] = { 'public-key': val('f_reality_pk') };
+      if (val('f_reality_sid')) node['reality-opts']['short-id'] = val('f_reality_sid');
     }
+  }
 
-    function advancedStart() {
-      return `<button class="advanced-toggle" onclick="this.nextElementSibling.classList.toggle('show');this.textContent=this.nextElementSibling.classList.contains('show')?'▼ 收起高级选项':'▶ 高级选项'">▶ 高级选项</button><div class="advanced-fields">`;
-    }
-    function advancedEnd() { return '</div>'; }
-
-    function checkboxField(id, label, checked) {
-      return `<div class="form-group"><label><input type="checkbox" id="${id}" ${checked ? 'checked' : ''} style="width:auto;margin-right:6px"> ${label}</label></div>`;
-    }
-
-    function networkFields(d) {
-      const nets = ['tcp', 'ws', 'grpc', 'h2'];
-      const curNet = d.network || 'tcp';
-      let html = `<div class="form-group"><label>传输方式</label><select id="f_network">${nets.map(n => `<option value="${n}" ${curNet === n ? 'selected' : ''}>${n}</option>`).join('')}</select></div>`;
-      html += `<div class="form-group"><label>ws-opts path</label><input id="f_ws_path" value="${escAttr((d['ws-opts'] || {}).path || '')}"></div>`;
-      html += `<div class="form-group"><label>ws-opts host</label><input id="f_ws_host" value="${escAttr(((d['ws-opts'] || {}).headers || {}).Host || '')}"></div>`;
-      return html;
-    }
-
-    function cancelForm() {
-      document.getElementById('formSection').style.display = 'none';
-      AppState.editingIndex = -1;
-    }
-
-    function saveProxy() {
-      const type = val('f_type');
-      const name = val('f_name');
-      const server = val('f_server');
-      const port = intVal('f_port');
-      if (!name || !server || !port) { toast('请填写名称、服务器和端口', 'error'); return; }
-
-      const node = { type, name, server, port };
-      const isEdit = AppState.editingIndex >= 0;
-      const oldName = isEdit ? AppState.proxies[AppState.editingIndex].name : null;
-
-      // Preserve unknown fields from original node when editing
-      if (isEdit) {
-        const orig = AppState.proxies[AppState.editingIndex];
-        Object.keys(orig).forEach(k => {
-          if (!(k in node)) node[k] = orig[k];
-        });
-      }
-
-      if (type === 'ss') {
-        node.cipher = val('f_cipher'); node.password = val('f_password');
-        if (el('f_udp') && el('f_udp').checked) node.udp = true;
-      }
-      if (type === 'vmess') {
-        node.uuid = val('f_uuid'); node.alterId = intVal('f_alterId') || 0; node.cipher = val('f_cipher');
-        if (el('f_tls') && el('f_tls').checked) node.tls = true;
-        if (el('f_skip_cert') && el('f_skip_cert').checked) node['skip-cert-verify'] = true;
-        if (val('f_servername')) node.servername = val('f_servername');
-        applyNetworkFields(node);
-      }
-      if (type === 'trojan') {
-        node.password = val('f_password');
-        if (val('f_sni')) node.sni = val('f_sni');
-        if (el('f_skip_cert') && el('f_skip_cert').checked) node['skip-cert-verify'] = true;
-        applyNetworkFields(node);
-      }
-      if (type === 'hysteria2') {
-        node.password = val('f_password');
-        if (val('f_sni')) node.sni = val('f_sni');
-        if (el('f_skip_cert') && el('f_skip_cert').checked) node['skip-cert-verify'] = true;
-        if (el('f_udp') && el('f_udp').checked) node.udp = true;
-        if (val('f_up')) node.up = val('f_up');
-        if (val('f_down')) node.down = val('f_down');
-        if (val('f_obfs')) node.obfs = val('f_obfs');
-        if (val('f_obfs_password')) node['obfs-password'] = val('f_obfs_password');
-      }
-      if (type === 'vless') {
-        node.uuid = val('f_uuid');
-        if (val('f_flow')) node.flow = val('f_flow');
-        if (el('f_tls') && el('f_tls').checked) node.tls = true;
-        if (val('f_servername')) node.servername = val('f_servername');
-        if (val('f_fp')) node['client-fingerprint'] = val('f_fp');
-        if (el('f_udp') && el('f_udp').checked) node.udp = true;
-        applyNetworkFields(node);
-        if (val('f_reality_pk')) {
-          node['reality-opts'] = { 'public-key': val('f_reality_pk') };
-          if (val('f_reality_sid')) node['reality-opts']['short-id'] = val('f_reality_sid');
-        }
-      }
-
-      if (isEdit) {
-        // Remove fields from the old type that don't apply
-        const keepFields = Object.keys(node);
-        AppState.proxies[AppState.editingIndex] = node;
-        // Sync name in groups
-        if (oldName !== name) {
-          AppState.proxyGroups.forEach(g => {
-            if (g.proxies) {
-              const idx = g.proxies.indexOf(oldName);
-              if (idx !== -1) g.proxies[idx] = name;
-            }
-          });
-        }
-      } else {
-        AppState.proxies.push(node);
-      }
-
-      // Update group membership from checkboxes
-      document.querySelectorAll('.form-group-cb').forEach(cb => {
-        const gi = parseInt(cb.dataset.group);
-        const g = AppState.proxyGroups[gi];
-        if (!g) return;
-        if (!g.proxies) g.proxies = [];
-        const inGroup = g.proxies.includes(name);
-        if (cb.checked && !inGroup) g.proxies.push(name);
-        if (!cb.checked && inGroup) g.proxies = g.proxies.filter(n => n !== name);
-        // Also clean old name if renamed
-        if (isEdit && oldName !== name) {
-          g.proxies = g.proxies.filter(n => n !== oldName);
+  if (isEdit) {
+    // Remove fields from the old type that don't apply
+    const keepFields = Object.keys(node);
+    AppState.proxies[AppState.editingIndex] = node;
+    // Sync name in groups
+    if (oldName !== name) {
+      AppState.proxyGroups.forEach(g => {
+        if (g.proxies) {
+          const idx = g.proxies.indexOf(oldName);
+          if (idx !== -1) g.proxies[idx] = name;
         }
       });
-
-      toast(isEdit ? '节点已更新' : '节点已添加');
-      cancelForm();
-      renderAll();
     }
+  } else {
+    AppState.proxies.push(node);
+  }
 
-    function applyNetworkFields(node) {
-      const net = val('f_network');
-      if (net && net !== 'tcp') node.network = net;
-      if (val('f_ws_path') || val('f_ws_host')) {
-        node['ws-opts'] = {};
-        if (val('f_ws_path')) node['ws-opts'].path = val('f_ws_path');
-        if (val('f_ws_host')) node['ws-opts'].headers = { Host: val('f_ws_host') };
-      }
+  // Update group membership from checkboxes
+  document.querySelectorAll('.form-group-cb').forEach(cb => {
+    const gi = parseInt(cb.dataset.group);
+    const g = AppState.proxyGroups[gi];
+    if (!g) return;
+    if (!g.proxies) g.proxies = [];
+    const inGroup = g.proxies.includes(name);
+    if (cb.checked && !inGroup) g.proxies.push(name);
+    if (!cb.checked && inGroup) g.proxies = g.proxies.filter(n => n !== name);
+    // Also clean old name if renamed
+    if (isEdit && oldName !== name) {
+      g.proxies = g.proxies.filter(n => n !== oldName);
     }
+  });
 
-    function deleteProxy(idx) {
-      const name = AppState.proxies[idx].name;
-      showModal('删除节点', `确定要删除节点 "${escHtml(name)}" 吗？将同时从所有代理组中移除。`, () => {
-        AppState.proxies.splice(idx, 1);
-        AppState.proxyGroups.forEach(g => {
-          if (g.proxies) g.proxies = g.proxies.filter(n => n !== name);
-        });
-        if (AppState.editingIndex === idx) cancelForm();
-        else if (AppState.editingIndex > idx) AppState.editingIndex--;
-        toast('节点已删除');
-        renderAll();
-      });
-    }
+  toast(isEdit ? '节点已更新' : '节点已添加');
+  cancelForm();
+  renderAll();
+}
 
-    // ========== Proxy Groups ==========
-    function renderProxyGroups() {
-      const list = document.getElementById('proxyGroupsList');
-      if (!AppState.proxyGroups.length) {
-        list.innerHTML = '<div class="empty-state"><p>暂无代理组</p></div>';
-        return;
-      }
-      const allNames = AppState.proxies.map(p => p.name);
-      const groupNames = AppState.proxyGroups.map(g => g.name);
-      // provider names
-      const providerNames = Object.keys(AppState.proxyProviders);
+function applyNetworkFields(node) {
+  const net = val('f_network');
+  if (net && net !== 'tcp') node.network = net;
+  if (val('f_ws_path') || val('f_ws_host')) {
+    node['ws-opts'] = {};
+    if (val('f_ws_path')) node['ws-opts'].path = val('f_ws_path');
+    if (val('f_ws_host')) node['ws-opts'].headers = { Host: val('f_ws_host') };
+  }
+}
 
-      list.innerHTML = AppState.proxyGroups.map((g, gi) => {
-        const members = g.proxies || [];
-        const useProviders = g.use || [];
-        let membersHtml = members.map(m => {
-          const isGrp = groupNames.includes(m);
-          return `<span class="member-tag ${isGrp ? 'is-group' : ''}">
+function deleteProxy(idx) {
+  const name = AppState.proxies[idx].name;
+  showModal('删除节点', `确定要删除节点 "${escHtml(name)}" 吗？将同时从所有代理组中移除。`, () => {
+    AppState.proxies.splice(idx, 1);
+    AppState.proxyGroups.forEach(g => {
+      if (g.proxies) g.proxies = g.proxies.filter(n => n !== name);
+    });
+    if (AppState.editingIndex === idx) cancelForm();
+    else if (AppState.editingIndex > idx) AppState.editingIndex--;
+    toast('节点已删除');
+    renderAll();
+  });
+}
+
+// ========== Proxy Groups ==========
+function renderProxyGroups() {
+  const list = document.getElementById('proxyGroupsList');
+  if (!AppState.proxyGroups.length) {
+    list.innerHTML = '<div class="empty-state"><p>暂无代理组</p></div>';
+    return;
+  }
+  const allNames = AppState.proxies.map(p => p.name);
+  const groupNames = AppState.proxyGroups.map(g => g.name);
+  // provider names
+  const providerNames = Object.keys(AppState.proxyProviders);
+
+  list.innerHTML = AppState.proxyGroups.map((g, gi) => {
+    const members = g.proxies || [];
+    const useProviders = g.use || [];
+    let membersHtml = members.map(m => {
+      const isGrp = groupNames.includes(m);
+      return `<span class="member-tag ${isGrp?'is-group':''}">
         ${escHtml(m)}
         <button class="remove-member" onclick="removeMember(${gi},'${escAttr(m)}')" title="移除">&times;</button>
       </span>`;
-        }).join('');
-        // Show use (providers) as read-only tags
-        membersHtml += useProviders.map(u =>
-          `<span class="member-tag is-provider">${escHtml(u)} (provider)</span>`).join('');
-        if (!members.length && !useProviders.length) membersHtml = '<span style="color:var(--text2);font-size:.85em">无成员</span>';
+    }).join('');
+    // Show use (providers) as read-only tags
+    membersHtml += useProviders.map(u =>
+      `<span class="member-tag is-provider">${escHtml(u)} (provider)</span>`).join('');
+    if (!members.length && !useProviders.length) membersHtml = '<span style="color:var(--text2);font-size:.85em">无成员</span>';
 
-        // Build options for add-member dropdown
-        let options = '<option value="">选择添加...</option>';
-        allNames.forEach(n => {
-          if (!members.includes(n)) options += `<option value="proxy:${escAttr(n)}">[节点] ${escHtml(n)}</option>`;
-        });
-        groupNames.forEach((n, i) => {
-          if (i !== gi && !members.includes(n)) options += `<option value="group:${escAttr(n)}">[分组] ${escHtml(n)}</option>`;
-        });
+    // Build options for add-member dropdown
+    let options = '<option value="">选择添加...</option>';
+    allNames.forEach(n => {
+      if (!members.includes(n)) options += `<option value="proxy:${escAttr(n)}">[节点] ${escHtml(n)}</option>`;
+    });
+    groupNames.forEach((n, i) => {
+      if (i !== gi && !members.includes(n)) options += `<option value="group:${escAttr(n)}">[分组] ${escHtml(n)}</option>`;
+    });
 
-        return `<div class="group-item">
+    return `<div class="group-item">
       <div class="group-header" onclick="toggleGroup(${gi})">
         <span class="arrow" id="arrow_${gi}">▶</span>
         <span class="group-name">${escHtml(g.name)}</span>
@@ -1578,58 +1195,58 @@
         </div>
       </div>
     </div>`;
-      }).join('');
-    }
+  }).join('');
+}
 
-    function toggleGroup(gi) {
-      const body = document.getElementById('groupBody_' + gi);
-      const arrow = document.getElementById('arrow_' + gi);
-      body.classList.toggle('show');
-      arrow.classList.toggle('open');
-    }
+function toggleGroup(gi) {
+  const body = document.getElementById('groupBody_' + gi);
+  const arrow = document.getElementById('arrow_' + gi);
+  body.classList.toggle('show');
+  arrow.classList.toggle('open');
+}
 
-    function removeMember(gi, name) {
-      const g = AppState.proxyGroups[gi];
+function removeMember(gi, name) {
+  const g = AppState.proxyGroups[gi];
+  if (g.proxies) g.proxies = g.proxies.filter(n => n !== name);
+  renderProxyGroups();
+  // Keep this group open
+  document.getElementById('groupBody_' + gi).classList.add('show');
+  document.getElementById('arrow_' + gi).classList.add('open');
+}
+
+function addMember(gi) {
+  const sel = document.getElementById('addMemberSelect_' + gi);
+  if (!sel.value) return;
+  const name = sel.value.replace(/^(proxy|group):/, '');
+  const g = AppState.proxyGroups[gi];
+  if (!g.proxies) g.proxies = [];
+  if (!g.proxies.includes(name)) {
+    g.proxies.push(name);
+    renderProxyGroups();
+    // Re-open this group
+    document.getElementById('groupBody_' + gi).classList.add('show');
+    document.getElementById('arrow_' + gi).classList.add('open');
+  }
+}
+
+function deleteGroup(gi) {
+  const name = AppState.proxyGroups[gi].name;
+  showModal('删除代理组', `确定要删除代理组 "${escHtml(name)}" 吗？将从其他组中移除对它的引用。`, () => {
+    AppState.proxyGroups.splice(gi, 1);
+    // Clean references
+    AppState.proxyGroups.forEach(g => {
       if (g.proxies) g.proxies = g.proxies.filter(n => n !== name);
-      renderProxyGroups();
-      // Keep this group open
-      document.getElementById('groupBody_' + gi).classList.add('show');
-      document.getElementById('arrow_' + gi).classList.add('open');
-    }
+    });
+    toast('代理组已删除');
+    renderProxyGroups();
+  });
+}
 
-    function addMember(gi) {
-      const sel = document.getElementById('addMemberSelect_' + gi);
-      if (!sel.value) return;
-      const name = sel.value.replace(/^(proxy|group):/, '');
-      const g = AppState.proxyGroups[gi];
-      if (!g.proxies) g.proxies = [];
-      if (!g.proxies.includes(name)) {
-        g.proxies.push(name);
-        renderProxyGroups();
-        // Re-open this group
-        document.getElementById('groupBody_' + gi).classList.add('show');
-        document.getElementById('arrow_' + gi).classList.add('open');
-      }
-    }
-
-    function deleteGroup(gi) {
-      const name = AppState.proxyGroups[gi].name;
-      showModal('删除代理组', `确定要删除代理组 "${escHtml(name)}" 吗？将从其他组中移除对它的引用。`, () => {
-        AppState.proxyGroups.splice(gi, 1);
-        // Clean references
-        AppState.proxyGroups.forEach(g => {
-          if (g.proxies) g.proxies = g.proxies.filter(n => n !== name);
-        });
-        toast('代理组已删除');
-        renderProxyGroups();
-      });
-    }
-
-    function showCreateGroupDialog() {
-      const c = document.getElementById('modalContainer');
-      let parentOpts = '<option value="">不嵌套</option>';
-      AppState.proxyGroups.forEach((g, i) => { parentOpts += `<option value="${i}">${escHtml(g.name)}</option>`; });
-      c.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+function showCreateGroupDialog() {
+  const c = document.getElementById('modalContainer');
+  let parentOpts = '<option value="">不嵌套</option>';
+  AppState.proxyGroups.forEach((g, i) => { parentOpts += `<option value="${i}">${escHtml(g.name)}</option>`; });
+  c.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
     <div class="modal">
       <h3>新建代理组</h3>
       <div class="form-group"><label class="required">组名</label><input id="cg_name"></div>
@@ -1644,86 +1261,86 @@
       </div>
     </div>
   </div>`;
+}
+
+function createGroupFromDialog() {
+  const name = document.getElementById('cg_name').value.trim();
+  if (!name) { toast('请输入组名', 'error'); return; }
+  if (AppState.proxyGroups.some(g => g.name === name)) { toast('组名已存在', 'error'); return; }
+  const type = document.getElementById('cg_type').value;
+  const parentVal = document.getElementById('cg_parent').value;
+  const newGroup = { name, type, proxies: [] };
+  if (type === 'url-test' || type === 'fallback') {
+    newGroup.url = 'http://www.gstatic.com/generate_204';
+    newGroup.interval = 300;
+  }
+  AppState.proxyGroups.push(newGroup);
+  if (parentVal !== '') {
+    const pi = parseInt(parentVal);
+    if (AppState.proxyGroups[pi]) {
+      if (!AppState.proxyGroups[pi].proxies) AppState.proxyGroups[pi].proxies = [];
+      AppState.proxyGroups[pi].proxies.push(name);
     }
+  }
+  closeModal();
+  toast('代理组已创建');
+  renderProxyGroups();
+}
 
-    function createGroupFromDialog() {
-      const name = document.getElementById('cg_name').value.trim();
-      if (!name) { toast('请输入组名', 'error'); return; }
-      if (AppState.proxyGroups.some(g => g.name === name)) { toast('组名已存在', 'error'); return; }
-      const type = document.getElementById('cg_type').value;
-      const parentVal = document.getElementById('cg_parent').value;
-      const newGroup = { name, type, proxies: [] };
-      if (type === 'url-test' || type === 'fallback') {
-        newGroup.url = 'http://www.gstatic.com/generate_204';
-        newGroup.interval = 300;
-      }
-      AppState.proxyGroups.push(newGroup);
-      if (parentVal !== '') {
-        const pi = parseInt(parentVal);
-        if (AppState.proxyGroups[pi]) {
-          if (!AppState.proxyGroups[pi].proxies) AppState.proxyGroups[pi].proxies = [];
-          AppState.proxyGroups[pi].proxies.push(name);
-        }
-      }
-      closeModal();
-      toast('代理组已创建');
-      renderProxyGroups();
-    }
+// ========== Export ==========
 
-    // ========== Export ==========
+// ========== Airport / Proxy Providers ==========
+function toggleAirportAutoUpdate() {
+  const checked = document.getElementById('airportAutoUpdate').checked;
+  document.getElementById('airportAutoUpdateFields').style.display = checked ? '' : 'none';
+}
 
-    // ========== Airport / Proxy Providers ==========
-    function toggleAirportAutoUpdate() {
-      const checked = document.getElementById('airportAutoUpdate').checked;
-      document.getElementById('airportAutoUpdateFields').style.display = checked ? '' : 'none';
-    }
+function renderAirportGroupCheckboxes() {
+  const container = document.getElementById('airportGroupCheckboxes');
+  if (!container) return;
+  if (!AppState.proxyGroups.length) {
+    container.innerHTML = '<span style="color:var(--text2);font-size:.85em">暂无代理组</span>';
+    return;
+  }
+  container.innerHTML = AppState.proxyGroups.map((g, gi) =>
+    `<label><input type="checkbox" class="airport-group-cb" data-group="${gi}"> ${escHtml(g.name)}</label>`
+  ).join('');
+}
 
-    function renderAirportGroupCheckboxes() {
-      const container = document.getElementById('airportGroupCheckboxes');
-      if (!container) return;
-      if (!AppState.proxyGroups.length) {
-        container.innerHTML = '<span style="color:var(--text2);font-size:.85em">暂无代理组</span>';
-        return;
-      }
-      container.innerHTML = AppState.proxyGroups.map((g, gi) =>
-        `<label><input type="checkbox" class="airport-group-cb" data-group="${gi}"> ${escHtml(g.name)}</label>`
-      ).join('');
-    }
-
-    function renderProviders() {
-      const grid = document.getElementById('providerGrid');
-      const countEl = document.getElementById('providerCount');
-      if (!grid) return;
-      const names = Object.keys(AppState.proxyProviders);
-      countEl.textContent = names.length;
-      if (!names.length) {
-        grid.innerHTML = '<div class="empty-state"><p>暂无订阅源</p></div>';
-        return;
-      }
-      const groupNames = AppState.proxyGroups.map(g => g.name);
-      grid.innerHTML = names.map(name => {
-        const p = AppState.proxyProviders[name];
-        const url = p.url || p.path || '';
-        const pType = p.type || 'http';
-        const interval = p.interval || '';
-        const hc = p['health-check'] || {};
-        // Find which groups use this provider
-        const usedBy = AppState.proxyGroups.filter(g => g.use && g.use.includes(name)).map(g => g.name);
-        return `<div class="provider-card">
+function renderProviders() {
+  const grid = document.getElementById('providerGrid');
+  const countEl = document.getElementById('providerCount');
+  if (!grid) return;
+  const names = Object.keys(AppState.proxyProviders);
+  countEl.textContent = names.length;
+  if (!names.length) {
+    grid.innerHTML = '<div class="empty-state"><p>暂无订阅源</p></div>';
+    return;
+  }
+  const groupNames = AppState.proxyGroups.map(g => g.name);
+  grid.innerHTML = names.map(name => {
+    const p = AppState.proxyProviders[name];
+    const url = p.url || p.path || '';
+    const pType = p.type || 'http';
+    const interval = p.interval || '';
+    const hc = p['health-check'] || {};
+    // Find which groups use this provider
+    const usedBy = AppState.proxyGroups.filter(g => g.use && g.use.includes(name)).map(g => g.name);
+    return `<div class="provider-card">
       <div class="provider-card-name">
         <span>${escHtml(name)}</span>
         <span class="badge" style="background:var(--warn)">${pType}</span>
       </div>
       <div class="provider-card-detail">${escHtml(url)}</div>
       ${interval ? `<div class="provider-card-detail">更新间隔: ${interval}s</div>` : ''}
-      ${hc.url ? `<div class="provider-card-detail">健康检查: ${escHtml(hc.url)} (${hc.interval || 300}s)</div>` : ''}
+      ${hc.url ? `<div class="provider-card-detail">健康检查: ${escHtml(hc.url)} (${hc.interval||300}s)</div>` : ''}
       <div class="provider-use-groups">
         <div class="group-select-title">被以下代理组引用 (use)：</div>
         <div class="group-checkboxes">
           ${AppState.proxyGroups.map((g, gi) => {
-          const checked = g.use && g.use.includes(name) ? 'checked' : '';
-          return `<label><input type="checkbox" ${checked} onchange="toggleProviderUse('${escAttr(name)}',${gi},this.checked)"> ${escHtml(g.name)}</label>`;
-        }).join('')}
+            const checked = g.use && g.use.includes(name) ? 'checked' : '';
+            return `<label><input type="checkbox" ${checked} onchange="toggleProviderUse('${escAttr(name)}',${gi},this.checked)"> ${escHtml(g.name)}</label>`;
+          }).join('')}
         </div>
       </div>
       <div class="provider-card-actions">
@@ -1731,205 +1348,204 @@
         <button class="btn btn-danger btn-small" onclick="deleteProvider('${escAttr(name)}')">删除</button>
       </div>
     </div>`;
-      }).join('');
+  }).join('');
+}
+
+function addAirport() {
+  const url = document.getElementById('airportUrl').value.trim();
+  const name = document.getElementById('airportName').value.trim();
+  const type = document.getElementById('airportType').value;
+  const autoUpdate = document.getElementById('airportAutoUpdate').checked;
+
+  if (!name) { toast('请输入订阅名称', 'error'); return; }
+  if (!url && type === 'http') { toast('请输入订阅链接', 'error'); return; }
+  if (AppState.proxyProviders[name]) { toast('该名称已存在，请换一个', 'error'); return; }
+
+  const provider = { type };
+  if (type === 'http') {
+    provider.url = url;
+    if (autoUpdate) {
+      const interval = parseInt(document.getElementById('airportInterval').value) || 86400;
+      provider.interval = interval;
     }
+  } else {
+    provider.path = url;
+  }
+  if (autoUpdate) {
+    const healthUrl = document.getElementById('airportHealthUrl').value.trim();
+    const healthInterval = parseInt(document.getElementById('airportHealthInterval').value) || 300;
+    provider['health-check'] = { enable: true, url: healthUrl || 'http://www.gstatic.com/generate_204', interval: healthInterval };
+  }
 
-    function addAirport() {
-      const url = document.getElementById('airportUrl').value.trim();
-      const name = document.getElementById('airportName').value.trim();
-      const type = document.getElementById('airportType').value;
-      const autoUpdate = document.getElementById('airportAutoUpdate').checked;
+  AppState.proxyProviders[name] = provider;
 
-      if (!name) { toast('请输入订阅名称', 'error'); return; }
-      if (!url && type === 'http') { toast('请输入订阅链接', 'error'); return; }
-      if (AppState.proxyProviders[name]) { toast('该名称已存在，请换一个', 'error'); return; }
+  // Add use reference to selected groups
+  document.querySelectorAll('.airport-group-cb:checked').forEach(cb => {
+    const gi = parseInt(cb.dataset.group);
+    const g = AppState.proxyGroups[gi];
+    if (!g) return;
+    if (!g.use) g.use = [];
+    if (!g.use.includes(name)) g.use.push(name);
+  });
 
-      const provider = { type };
-      if (type === 'http') {
-        provider.url = url;
-        if (autoUpdate) {
-          const interval = parseInt(document.getElementById('airportInterval').value) || 86400;
-          provider.interval = interval;
-        }
-      } else {
-        provider.path = url;
-      }
-      if (autoUpdate) {
-        const healthUrl = document.getElementById('airportHealthUrl').value.trim();
-        const healthInterval = parseInt(document.getElementById('airportHealthInterval').value) || 300;
-        provider['health-check'] = { enable: true, url: healthUrl || 'http://www.gstatic.com/generate_204', interval: healthInterval };
-      }
+  // Clear form
+  document.getElementById('airportUrl').value = '';
+  document.getElementById('airportName').value = '';
+  document.getElementById('airportInterval').value = '86400';
+  document.getElementById('airportHealthInterval').value = '300';
 
-      AppState.proxyProviders[name] = provider;
+  toast('订阅源已添加');
+  renderAll();
+}
 
-      // Add use reference to selected groups
-      document.querySelectorAll('.airport-group-cb:checked').forEach(cb => {
-        const gi = parseInt(cb.dataset.group);
-        const g = AppState.proxyGroups[gi];
-        if (!g) return;
-        if (!g.use) g.use = [];
-        if (!g.use.includes(name)) g.use.push(name);
-      });
+function toggleProviderUse(providerName, gi, checked) {
+  const g = AppState.proxyGroups[gi];
+  if (!g) return;
+  if (!g.use) g.use = [];
+  if (checked && !g.use.includes(providerName)) {
+    g.use.push(providerName);
+  } else if (!checked) {
+    g.use = g.use.filter(n => n !== providerName);
+    if (!g.use.length) delete g.use;
+  }
+  renderProxyGroups();
+}
 
-      // Clear form
-      document.getElementById('airportUrl').value = '';
-      document.getElementById('airportName').value = '';
-      document.getElementById('airportInterval').value = '86400';
-      document.getElementById('airportHealthInterval').value = '300';
-
-      toast('订阅源已添加');
-      renderAll();
-    }
-
-    function toggleProviderUse(providerName, gi, checked) {
-      const g = AppState.proxyGroups[gi];
-      if (!g) return;
-      if (!g.use) g.use = [];
-      if (checked && !g.use.includes(providerName)) {
-        g.use.push(providerName);
-      } else if (!checked) {
-        g.use = g.use.filter(n => n !== providerName);
-        if (!g.use.length) delete g.use;
-      }
-      renderProxyGroups();
-    }
-
-    function editProvider(name) {
-      const p = AppState.proxyProviders[name];
-      if (!p) return;
-      const c = document.getElementById('modalContainer');
-      const hc = p['health-check'] || {};
-      c.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+function editProvider(name) {
+  const p = AppState.proxyProviders[name];
+  if (!p) return;
+  const c = document.getElementById('modalContainer');
+  const hc = p['health-check'] || {};
+  c.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
     <div class="modal" style="max-width:520px">
       <h3>编辑订阅源: ${escHtml(name)}</h3>
       <div class="form-group"><label>名称</label><input id="ep_name" value="${escAttr(name)}"></div>
       <div class="form-group"><label>类型</label><select id="ep_type">
-        <option value="http" ${p.type === 'http' ? 'selected' : ''}>http</option>
-        <option value="file" ${p.type === 'file' ? 'selected' : ''}>file</option>
+        <option value="http" ${p.type==='http'?'selected':''}>http</option>
+        <option value="file" ${p.type==='file'?'selected':''}>file</option>
       </select></div>
-      <div class="form-group"><label>${p.type === 'http' ? '订阅链接' : '文件路径'}</label><input id="ep_url" class="provider-url-input" value="${escAttr(p.url || p.path || '')}"></div>
-      <div class="form-group"><label>更新间隔 (秒)</label><input id="ep_interval" type="number" value="${p.interval || 86400}"></div>
-      <div class="form-group"><label>健康检查 URL</label><input id="ep_hc_url" value="${escAttr(hc.url || 'http://www.gstatic.com/generate_204')}"></div>
-      <div class="form-group"><label>检查间隔 (秒)</label><input id="ep_hc_interval" type="number" value="${hc.interval || 300}"></div>
+      <div class="form-group"><label>${p.type==='http'?'订阅链接':'文件路径'}</label><input id="ep_url" class="provider-url-input" value="${escAttr(p.url||p.path||'')}"></div>
+      <div class="form-group"><label>更新间隔 (秒)</label><input id="ep_interval" type="number" value="${p.interval||86400}"></div>
+      <div class="form-group"><label>健康检查 URL</label><input id="ep_hc_url" value="${escAttr(hc.url||'http://www.gstatic.com/generate_204')}"></div>
+      <div class="form-group"><label>检查间隔 (秒)</label><input id="ep_hc_interval" type="number" value="${hc.interval||300}"></div>
       <div class="btn-group" style="margin-top:16px">
         <button class="btn btn-outline" onclick="closeModal()">取消</button>
         <button class="btn btn-primary" onclick="saveProvider('${escAttr(name)}')">保存</button>
       </div>
     </div>
   </div>`;
-    }
+}
 
-    function saveProvider(oldName) {
-      const newName = document.getElementById('ep_name').value.trim();
-      const type = document.getElementById('ep_type').value;
-      const url = document.getElementById('ep_url').value.trim();
-      const interval = parseInt(document.getElementById('ep_interval').value) || 86400;
-      const hcUrl = document.getElementById('ep_hc_url').value.trim();
-      const hcInterval = parseInt(document.getElementById('ep_hc_interval').value) || 300;
+function saveProvider(oldName) {
+  const newName = document.getElementById('ep_name').value.trim();
+  const type = document.getElementById('ep_type').value;
+  const url = document.getElementById('ep_url').value.trim();
+  const interval = parseInt(document.getElementById('ep_interval').value) || 86400;
+  const hcUrl = document.getElementById('ep_hc_url').value.trim();
+  const hcInterval = parseInt(document.getElementById('ep_hc_interval').value) || 300;
 
-      if (!newName) { toast('请输入名称', 'error'); return; }
-      if (newName !== oldName && AppState.proxyProviders[newName]) { toast('该名称已存在', 'error'); return; }
+  if (!newName) { toast('请输入名称', 'error'); return; }
+  if (newName !== oldName && AppState.proxyProviders[newName]) { toast('该名称已存在', 'error'); return; }
 
-      const provider = { type };
-      if (type === 'http') { provider.url = url; provider.interval = interval; }
-      else { provider.path = url; }
-      provider['health-check'] = { enable: true, url: hcUrl || 'http://www.gstatic.com/generate_204', interval: hcInterval };
+  const provider = { type };
+  if (type === 'http') { provider.url = url; provider.interval = interval; }
+  else { provider.path = url; }
+  provider['health-check'] = { enable: true, url: hcUrl || 'http://www.gstatic.com/generate_204', interval: hcInterval };
 
-      // If renamed, update references
-      if (newName !== oldName) {
-        delete AppState.proxyProviders[oldName];
-        AppState.proxyGroups.forEach(g => {
-          if (g.use) {
-            const idx = g.use.indexOf(oldName);
-            if (idx !== -1) g.use[idx] = newName;
-          }
-        });
+  // If renamed, update references
+  if (newName !== oldName) {
+    delete AppState.proxyProviders[oldName];
+    AppState.proxyGroups.forEach(g => {
+      if (g.use) {
+        const idx = g.use.indexOf(oldName);
+        if (idx !== -1) g.use[idx] = newName;
       }
-      AppState.proxyProviders[newName] = provider;
-
-      closeModal();
-      toast('订阅源已更新');
-      renderAll();
-    }
-
-    function deleteProvider(name) {
-      showModal('删除订阅源', `确定要删除订阅源 "${escHtml(name)}" 吗？将从所有代理组的 use 引用中移除。`, () => {
-        delete AppState.proxyProviders[name];
-        AppState.proxyGroups.forEach(g => {
-          if (g.use) {
-            g.use = g.use.filter(n => n !== name);
-            if (!g.use.length) delete g.use;
-          }
-        });
-        toast('订阅源已删除');
-        renderAll();
-      });
-    }
-
-    // ========== Export (continued) ==========
-    function exportConfig() {
-      const yamlStr = buildYaml();
-      const blob = new Blob([yamlStr], { type: 'text/yaml;charset=utf-8' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'clash-config.yaml';
-      a.click();
-      URL.revokeObjectURL(a.href);
-      toast('配置已导出');
-    }
-
-    function togglePreview() {
-      const wrap = document.getElementById('yamlPreviewWrap');
-      wrap.classList.toggle('show');
-      if (wrap.classList.contains('show')) {
-        document.getElementById('yamlPreview').textContent = buildYaml();
-      }
-    }
-
-    function copyYaml() {
-      const text = document.getElementById('yamlPreview').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        const btn = document.querySelector('.copy-btn');
-        btn.textContent = '已复制';
-        btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
-      });
-    }
-
-    function buildYaml() {
-      const out = {};
-      // Preserve all original keys except managed ones
-      if (AppState.rawConfig) {
-        Object.keys(AppState.rawConfig).forEach(k => {
-          if (k !== 'proxies' && k !== 'proxy-groups' && k !== 'proxy-providers') {
-            out[k] = AppState.rawConfig[k];
-          }
-        });
-      }
-      if (AppState.proxies.length) out.proxies = AppState.proxies;
-      if (AppState.proxyGroups.length) out['proxy-groups'] = AppState.proxyGroups;
-      if (Object.keys(AppState.proxyProviders).length) {
-        out['proxy-providers'] = AppState.proxyProviders;
-      }
-      return jsyaml.dump(out, { lineWidth: -1, noRefs: true, sortKeys: false, quotingType: '"', forceQuotes: false });
-    }
-
-    // ========== Helpers ==========
-    function el(id) { return document.getElementById(id); }
-    function val(id) { const e = el(id); return e ? e.value.trim() : ''; }
-    function intVal(id) { return parseInt(val(id)) || 0; }
-    function escHtml(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-    function escAttr(s) { if (!s) return ''; return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-    // ========== Click outside to collapse proxy groups ==========
-    document.addEventListener('click', function (e) {
-      const groupsList = document.getElementById('proxyGroupsList');
-      if (!groupsList || groupsList.contains(e.target)) return;
-      // Clicked outside proxy groups area, collapse all open groups
-      groupsList.querySelectorAll('.group-body.show').forEach(body => body.classList.remove('show'));
-      groupsList.querySelectorAll('.arrow.open').forEach(arrow => arrow.classList.remove('open'));
     });
-  </script>
-</body>
+  }
+  AppState.proxyProviders[newName] = provider;
 
+  closeModal();
+  toast('订阅源已更新');
+  renderAll();
+}
+
+function deleteProvider(name) {
+  showModal('删除订阅源', `确定要删除订阅源 "${escHtml(name)}" 吗？将从所有代理组的 use 引用中移除。`, () => {
+    delete AppState.proxyProviders[name];
+    AppState.proxyGroups.forEach(g => {
+      if (g.use) {
+        g.use = g.use.filter(n => n !== name);
+        if (!g.use.length) delete g.use;
+      }
+    });
+    toast('订阅源已删除');
+    renderAll();
+  });
+}
+
+// ========== Export (continued) ==========
+function exportConfig() {
+  const yamlStr = buildYaml();
+  const blob = new Blob([yamlStr], { type: 'text/yaml;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'clash-config.yaml';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('配置已导出');
+}
+
+function togglePreview() {
+  const wrap = document.getElementById('yamlPreviewWrap');
+  wrap.classList.toggle('show');
+  if (wrap.classList.contains('show')) {
+    document.getElementById('yamlPreview').textContent = buildYaml();
+  }
+}
+
+function copyYaml() {
+  const text = document.getElementById('yamlPreview').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '已复制';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+function buildYaml() {
+  const out = {};
+  // Preserve all original keys except managed ones
+  if (AppState.rawConfig) {
+    Object.keys(AppState.rawConfig).forEach(k => {
+      if (k !== 'proxies' && k !== 'proxy-groups' && k !== 'proxy-providers') {
+        out[k] = AppState.rawConfig[k];
+      }
+    });
+  }
+  if (AppState.proxies.length) out.proxies = AppState.proxies;
+  if (AppState.proxyGroups.length) out['proxy-groups'] = AppState.proxyGroups;
+  if (Object.keys(AppState.proxyProviders).length) {
+    out['proxy-providers'] = AppState.proxyProviders;
+  }
+  return jsyaml.dump(out, { lineWidth: -1, noRefs: true, sortKeys: false, quotingType: '"', forceQuotes: false });
+}
+
+// ========== Helpers ==========
+function el(id) { return document.getElementById(id); }
+function val(id) { const e = el(id); return e ? e.value.trim() : ''; }
+function intVal(id) { return parseInt(val(id)) || 0; }
+function escHtml(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escAttr(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ========== Click outside to collapse proxy groups ==========
+document.addEventListener('click', function(e) {
+  const groupsList = document.getElementById('proxyGroupsList');
+  if (!groupsList || groupsList.contains(e.target)) return;
+  // Clicked outside proxy groups area, collapse all open groups
+  groupsList.querySelectorAll('.group-body.show').forEach(body => body.classList.remove('show'));
+  groupsList.querySelectorAll('.arrow.open').forEach(arrow => arrow.classList.remove('open'));
+});
+</script>
+</body>
 </html>
