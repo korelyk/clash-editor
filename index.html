@@ -573,7 +573,9 @@ textarea { resize:vertical; }
       </label>
       <button class="btn btn-outline" onclick="startEmpty()">从零开始</button>
       <button class="btn btn-outline" onclick="loadPreset()">载入示例模板</button>
+      <button class="btn btn-outline" onclick="downloadBackupImport()">下载原始导入备份</button>
     </div>
+    <div id="importDiagnostics" class="section-subtitle" style="margin-top:12px;display:none"></div>
   </div>
 
   <div id="editorArea" class="hidden">
@@ -723,7 +725,9 @@ textarea { resize:vertical; }
         <button class="btn btn-success" onclick="exportConfig()">导出 YAML 文件</button>
         <button class="btn btn-outline" onclick="togglePreview()">预览 YAML</button>
         <button class="btn btn-outline" onclick="copyCurrentYamlDirect()">一键复制 YAML</button>
+        <button class="btn btn-outline" onclick="runHealthCheck()">配置体检</button>
       </div>
+      <div id="healthCheckResult" class="section-subtitle" style="margin-top:12px;display:none"></div>
       <div class="yaml-preview-wrap" id="yamlPreviewWrap">
         <button class="copy-btn" onclick="copyYaml()">复制</button>
         <pre class="yaml-preview" id="yamlPreview"></pre>
@@ -740,7 +744,10 @@ const AppState = {
   proxies: [],
   proxyGroups: [],
   proxyProviders: {},
-  editingIndex: -1
+  editingIndex: -1,
+  rawImportText: '',
+  importErrors: [],
+  importWarnings: []
 };
 
 function toast(msg, type='success') {
@@ -804,11 +811,16 @@ function parseConfig() {
   try {
     const doc = jsyaml.load(text);
     if (!doc || typeof doc !== 'object') throw new Error('无效的 YAML');
+    AppState.rawImportText = text;
     AppState.rawConfig = doc;
-    AppState.proxies = Array.isArray(doc.proxies) ? doc.proxies : [];
-    AppState.proxyGroups = Array.isArray(doc['proxy-groups']) ? doc['proxy-groups'] : [];
-    AppState.proxyProviders = doc['proxy-providers'] || {};
-    toast('配置解析成功');
+    AppState.proxies = normalizeImportedProxies(Array.isArray(doc.proxies) ? doc.proxies : []);
+    AppState.proxyGroups = normalizeImportedGroups(Array.isArray(doc['proxy-groups']) ? doc['proxy-groups'] : []);
+    AppState.proxyProviders = normalizeImportedProviders(doc['proxy-providers'] || {});
+    const diagnostics = collectImportDiagnostics();
+    AppState.importErrors = diagnostics.errors;
+    AppState.importWarnings = diagnostics.warnings;
+    renderImportDiagnostics();
+    toast(AppState.importWarnings.length ? `配置解析成功，发现 ${AppState.importWarnings.length} 个提醒` : '配置解析成功');
     showEditor();
   } catch (e) {
     toast('解析失败: ' + e.message, 'error');
@@ -816,10 +828,14 @@ function parseConfig() {
 }
 
 function startEmpty() {
+  AppState.rawImportText = '';
   AppState.rawConfig = {};
   AppState.proxies = [];
   AppState.proxyGroups = [];
   AppState.proxyProviders = {};
+  AppState.importErrors = [];
+  AppState.importWarnings = [];
+  renderImportDiagnostics();
   toast('已创建空配置', 'info');
   showEditor();
 }
@@ -828,6 +844,7 @@ function showEditor() {
   el('importSection').classList.add('hidden');
   el('editorArea').classList.remove('hidden');
   renderAll();
+  runHealthCheck(false);
 }
 
 function renderAll() {
@@ -836,6 +853,111 @@ function renderAll() {
   renderProxyGroups();
   renderProviders();
   renderAirportGroupCheckboxes();
+} 
+
+function normalizeImportedProxies(list) {
+  const seen = new Set();
+  return list.filter(Boolean).map((proxy, index) => {
+    const p = { ...proxy };
+    p.type = p.type || 'ss';
+    p.name = String(p.name || `节点 ${index + 1}`).trim();
+    if (seen.has(p.name)) {
+      let i = 2;
+      while (seen.has(`${p.name} ${i}`)) i++;
+      p.name = `${p.name} ${i}`;
+    }
+    seen.add(p.name);
+    if (p.port != null) p.port = Number(p.port) || p.port;
+    return p;
+  });
+}
+
+function normalizeImportedGroups(list) {
+  const seen = new Set();
+  return list.filter(Boolean).map((group, index) => {
+    const g = { ...group };
+    g.name = String(g.name || `代理组 ${index + 1}`).trim();
+    if (seen.has(g.name)) {
+      let i = 2;
+      while (seen.has(`${g.name} ${i}`)) i++;
+      g.name = `${g.name} ${i}`;
+    }
+    seen.add(g.name);
+    g.type = g.type || 'select';
+    g.proxies = Array.isArray(g.proxies) ? [...new Set(g.proxies.filter(Boolean))] : [];
+    if (Array.isArray(g.use)) g.use = [...new Set(g.use.filter(Boolean))];
+    return g;
+  });
+}
+
+function normalizeImportedProviders(providers) {
+  const out = {};
+  Object.entries(providers || {}).forEach(([name, provider]) => {
+    if (!provider || typeof provider !== 'object') return;
+    const key = String(name || '').trim();
+    if (!key) return;
+    out[key] = { ...provider };
+    if (!out[key].type) out[key].type = out[key].url ? 'http' : 'file';
+    if (out[key].interval != null) out[key].interval = Number(out[key].interval) || out[key].interval;
+  });
+  return out;
+}
+
+function collectImportDiagnostics() {
+  const errors = [];
+  const warnings = [];
+  const proxyNames = new Set(AppState.proxies.map(p => p.name));
+  const groupNames = new Set(AppState.proxyGroups.map(g => g.name));
+  const providerNames = new Set(Object.keys(AppState.proxyProviders));
+
+  AppState.proxies.forEach((p, idx) => {
+    if (!p.server) errors.push(`节点 ${p.name || idx + 1} 缺少 server`);
+    if (!p.port) warnings.push(`节点 ${p.name || idx + 1} 缺少或端口异常`);
+    if (!p.type) warnings.push(`节点 ${p.name || idx + 1} 缺少 type，已按 ss 处理`);
+  });
+
+  AppState.proxyGroups.forEach(g => {
+    (g.proxies || []).forEach(name => {
+      if (!proxyNames.has(name) && !groupNames.has(name)) warnings.push(`代理组 ${g.name} 引用了不存在的成员：${name}`);
+    });
+    (g.use || []).forEach(name => {
+      if (!providerNames.has(name)) warnings.push(`代理组 ${g.name} 引用了不存在的 provider：${name}`);
+    });
+    if ((g.type === 'url-test' || g.type === 'fallback' || g.type === 'load-balance') && !(g.proxies?.length || g.use?.length)) {
+      warnings.push(`代理组 ${g.name} 是 ${g.type}，但没有节点或 provider`);
+    }
+  });
+
+  return { errors, warnings };
+}
+
+function renderImportDiagnostics() {
+  const box = el('importDiagnostics');
+  if (!box) return;
+  const msgs = [];
+  if (AppState.importErrors.length) msgs.push(`错误 ${AppState.importErrors.length} 个：${AppState.importErrors.slice(0,3).join('；')}`);
+  if (AppState.importWarnings.length) msgs.push(`提醒 ${AppState.importWarnings.length} 个：${AppState.importWarnings.slice(0,4).join('；')}`);
+  if (!msgs.length) {
+    box.style.display = 'none';
+    box.textContent = '';
+    return;
+  }
+  box.style.display = '';
+  box.textContent = msgs.join(' ｜ ');
+}
+
+function downloadBackupImport() {
+  if (!AppState.rawImportText) {
+    toast('当前没有原始导入内容可备份', 'error');
+    return;
+  }
+  const blob = new Blob([AppState.rawImportText], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'clash-import-backup.yaml';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('已下载原始导入备份');
 }
 
 function switchTab(tabId) {
@@ -1730,6 +1852,19 @@ function buildYaml() {
   if (Object.keys(AppState.proxyProviders).length) out['proxy-providers'] = AppState.proxyProviders;
   return jsyaml.dump(out, { lineWidth: -1, noRefs: true, sortKeys: false, quotingType: '"', forceQuotes: false });
 }
+
+function runHealthCheck(showToast = true) {
+  const box = el('healthCheckResult');
+  const { errors, warnings } = collectImportDiagnostics();
+  const info = [];
+  if (errors.length) info.push(`错误 ${errors.length} 个：${errors.slice(0,3).join('；')}`);
+  if (warnings.length) info.push(`提醒 ${warnings.length} 个：${warnings.slice(0,5).join('；')}`);
+  if (!info.length) info.push('未发现明显结构问题，当前配置可继续编辑。');
+  box.style.display = '';
+  box.textContent = info.join(' ｜ ');
+  if (showToast) toast(errors.length ? `发现 ${errors.length} 个错误，${warnings.length} 个提醒` : warnings.length ? `发现 ${warnings.length} 个提醒` : '配置体检通过', errors.length ? 'error' : warnings.length ? 'info' : 'success');
+}
+
 function exportConfig() {
   const yamlStr = buildYaml();
   const blob = new Blob([yamlStr], { type: 'text/yaml;charset=utf-8' });
