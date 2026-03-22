@@ -914,6 +914,9 @@ function collectImportDiagnostics() {
     if (!p.server) errors.push(`节点 ${p.name || idx + 1} 缺少 server`);
     if (!p.port) warnings.push(`节点 ${p.name || idx + 1} 缺少或端口异常`);
     if (!p.type) warnings.push(`节点 ${p.name || idx + 1} 缺少 type，已按 ss 处理`);
+    const missing = getProxyMissingFields(p);
+    if (missing.length) warnings.push(`节点 ${p.name || idx + 1} 还缺字段：${missing.join(', ')}`);
+    if (p.port && (Number(p.port) <= 0 || Number(p.port) > 65535)) errors.push(`节点 ${p.name || idx + 1} 端口超出范围`);
   });
 
   AppState.proxyGroups.forEach(g => {
@@ -926,6 +929,13 @@ function collectImportDiagnostics() {
     if ((g.type === 'url-test' || g.type === 'fallback' || g.type === 'load-balance') && !(g.proxies?.length || g.use?.length)) {
       warnings.push(`代理组 ${g.name} 是 ${g.type}，但没有节点或 provider`);
     }
+    if (g.type === 'select' && !(g.proxies?.length || g.use?.length)) warnings.push(`代理组 ${g.name} 为空`);
+  });
+
+  Object.entries(AppState.proxyProviders).forEach(([name, provider]) => {
+    if (provider.type === 'http' && !provider.url) errors.push(`订阅源 ${name} 缺少 url`);
+    if (provider.type === 'file' && !provider.path) errors.push(`订阅源 ${name} 缺少 path`);
+    if (provider.interval && Number(provider.interval) < 300) warnings.push(`订阅源 ${name} 更新间隔过低，可能导致频繁拉取`);
   });
 
   return { errors, warnings };
@@ -1235,6 +1245,9 @@ function renderProxyCards() {
     if (p.tls) pills.push(`<span class="meta-pill">TLS</span>`);
     if (p['skip-cert-verify']) pills.push(`<span class="meta-pill">跳证书</span>`);
     if (p.udp) pills.push(`<span class="meta-pill">UDP</span>`);
+    if (p.servername || p.sni) pills.push(`<span class="meta-pill">SNI ${escHtml(p.servername || p.sni)}</span>`);
+    const missing = getProxyMissingFields(p);
+    if (missing.length) pills.push(`<span class="meta-pill" style="border-color:var(--danger);color:var(--danger)">缺 ${escHtml(missing.join('/'))}</span>`);
     return `<div class="proxy-card" data-type="${t}">
       <div class="proxy-card-name">
         <span>${escHtml(p.name || '未命名')}</span>
@@ -1243,6 +1256,8 @@ function renderProxyCards() {
       <div class="proxy-card-detail">${escHtml(p.server || '')}:${p.port || ''}</div>
       ${pills.length ? `<div class="proxy-card-meta">${pills.join('')}</div>` : ''}
       <div class="proxy-card-actions">
+        <button class="btn btn-outline btn-small" onclick="moveProxy(${index}, -1)">↑</button>
+        <button class="btn btn-outline btn-small" onclick="moveProxy(${index}, 1)">↓</button>
         <button class="btn btn-outline btn-small" onclick="editProxy(${index})">编辑</button>
         <button class="btn btn-outline btn-small" onclick="cloneProxy(${index})">克隆</button>
         <button class="btn btn-danger btn-small" onclick="deleteProxy(${index})">删除</button>
@@ -1273,6 +1288,26 @@ function cloneProxy(idx) {
   AppState.proxies.splice(idx + 1, 0, copy);
   toast('已克隆节点');
   renderAll();
+}
+
+function moveProxy(idx, delta) {
+  const next = idx + delta;
+  if (next < 0 || next >= AppState.proxies.length) return;
+  const arr = AppState.proxies;
+  [arr[idx], arr[next]] = [arr[next], arr[idx]];
+  renderProxyCards();
+}
+
+function getProxyMissingFields(proxy) {
+  const requiredMap = {
+    ss: ['server', 'port', 'cipher', 'password'],
+    vmess: ['server', 'port', 'uuid'],
+    trojan: ['server', 'port', 'password'],
+    hysteria2: ['server', 'port', 'password'],
+    vless: ['server', 'port', 'uuid']
+  };
+  const required = requiredMap[proxy.type] || ['server', 'port'];
+  return required.filter(key => !proxy[key]);
 }
 
 function buildForm(type, data) {
@@ -1711,6 +1746,10 @@ function renderProviders() {
     const pType = p.type || 'http';
     const interval = p.interval || '';
     const hc = p['health-check'] || {};
+    const warnings = [];
+    if (pType === 'http' && !p.url) warnings.push('缺订阅链接');
+    if (pType === 'file' && !p.path) warnings.push('缺文件路径');
+    if (pType === 'http' && interval && Number(interval) < 300) warnings.push('更新过于频繁');
     return `<div class="provider-card">
       <div class="provider-card-name">
         <span>${escHtml(name)}</span>
@@ -1719,6 +1758,7 @@ function renderProviders() {
       <div class="provider-card-detail">${escHtml(url)}</div>
       ${interval ? `<div class="provider-card-detail">更新间隔: ${interval}s</div>` : ''}
       ${hc.url ? `<div class="provider-card-detail">健康检查: ${escHtml(hc.url)} (${hc.interval||300}s)</div>` : ''}
+      ${warnings.length ? `<div class="provider-card-detail" style="color:var(--danger)">提醒：${escHtml(warnings.join(' / '))}</div>` : ''}
       <div class="provider-use-groups">
         <div class="group-select-title">被以下代理组引用 (use)：</div>
         <div class="group-checkboxes">
