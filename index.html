@@ -544,6 +544,20 @@ textarea { resize:vertical; }
 </style>
 </head>
 <body>
+<div id="authOverlay" class="modal-overlay" style="background:rgba(15,23,42,.78);backdrop-filter:blur(10px);z-index:2000;">
+  <div class="modal" style="max-width:420px;text-align:center;">
+    <h3 style="margin-bottom:10px;">输入访问密码</h3>
+    <p style="margin-bottom:14px;">此编辑器仅供你个人使用，输入密码后才可进入。通过验证后会在当前浏览器记住登录状态。</p>
+    <div class="form-group" style="text-align:left;">
+      <label>密码</label>
+      <input id="authPasswordInput" type="password" placeholder="请输入密码" onkeydown="if(event.key==='Enter') unlockEditor()">
+    </div>
+    <div class="btn-group" style="justify-content:center;margin-top:12px;">
+      <button class="btn btn-primary" onclick="unlockEditor()">进入编辑器</button>
+    </div>
+    <div id="authHint" class="form-hint" style="margin-top:12px;color:var(--danger);"></div>
+  </div>
+</div>
 
 <div class="header">
   <h1>Clash Verge 节点配置编辑器</h1>
@@ -739,6 +753,13 @@ textarea { resize:vertical; }
 <div id="modalContainer"></div>
 
 <script>
+const STORAGE_KEYS = {
+  auth: 'clash-editor-auth-ok',
+  workingConfig: 'clash-editor-working-config-v1',
+  rawImport: 'clash-editor-raw-import-v1'
+};
+const APP_PASSWORD = 'yjd999999';
+
 const AppState = {
   rawConfig: null,
   proxies: [],
@@ -760,6 +781,68 @@ function toast(msg, type='success') {
     t.style.transition = 'opacity .3s';
     setTimeout(() => t.remove(), 300);
   }, 2500);
+}
+
+function unlockEditor() {
+  const input = el('authPasswordInput');
+  const hint = el('authHint');
+  if (!input) return;
+  if (input.value !== APP_PASSWORD) {
+    if (hint) hint.textContent = '密码不对';
+    return;
+  }
+  localStorage.setItem(STORAGE_KEYS.auth, 'ok');
+  el('authOverlay').style.display = 'none';
+  if (hint) hint.textContent = '';
+  input.value = '';
+}
+
+function ensureAuth() {
+  if (localStorage.getItem(STORAGE_KEYS.auth) === 'ok') {
+    el('authOverlay').style.display = 'none';
+    return;
+  }
+  el('authOverlay').style.display = 'flex';
+}
+
+function restoreWorkingConfig() {
+  const savedRaw = localStorage.getItem(STORAGE_KEYS.rawImport);
+  const savedConfig = localStorage.getItem(STORAGE_KEYS.workingConfig);
+  if (savedRaw && !el('importText').value.trim()) el('importText').value = savedRaw;
+  if (!savedConfig) return;
+  try {
+    const parsed = JSON.parse(savedConfig);
+    AppState.rawConfig = parsed.rawConfig || {};
+    AppState.rawImportText = parsed.rawImportText || '';
+    AppState.proxies = normalizeImportedProxies(parsed.proxies || []);
+    AppState.proxyGroups = normalizeImportedGroups(parsed.proxyGroups || []);
+    AppState.proxyProviders = normalizeImportedProviders(parsed.proxyProviders || {});
+    const diagnostics = collectImportDiagnostics();
+    AppState.importErrors = diagnostics.errors;
+    AppState.importWarnings = diagnostics.warnings;
+    renderImportDiagnostics();
+    if (AppState.rawImportText && !el('importText').value.trim()) el('importText').value = AppState.rawImportText;
+    showEditor();
+    toast('已自动恢复上次配置', 'info');
+  } catch (e) {
+    console.warn('restoreWorkingConfig failed', e);
+  }
+}
+
+function persistWorkingConfig() {
+  try {
+    const payload = {
+      rawConfig: AppState.rawConfig,
+      rawImportText: AppState.rawImportText,
+      proxies: AppState.proxies,
+      proxyGroups: AppState.proxyGroups,
+      proxyProviders: AppState.proxyProviders
+    };
+    localStorage.setItem(STORAGE_KEYS.workingConfig, JSON.stringify(payload));
+    if (AppState.rawImportText) localStorage.setItem(STORAGE_KEYS.rawImport, AppState.rawImportText);
+  } catch (e) {
+    console.warn('persistWorkingConfig failed', e);
+  }
 }
 
 function showModal(title, message, onConfirm) {
@@ -821,6 +904,7 @@ function parseConfig() {
     AppState.importWarnings = diagnostics.warnings;
     renderImportDiagnostics();
     toast(AppState.importWarnings.length ? `配置解析成功，发现 ${AppState.importWarnings.length} 个提醒` : '配置解析成功');
+    persistWorkingConfig();
     showEditor();
   } catch (e) {
     toast('解析失败: ' + e.message, 'error');
@@ -836,6 +920,7 @@ function startEmpty() {
   AppState.importErrors = [];
   AppState.importWarnings = [];
   renderImportDiagnostics();
+  persistWorkingConfig();
   toast('已创建空配置', 'info');
   showEditor();
 }
@@ -1220,6 +1305,7 @@ function confirmAddLinks() {
     }
   });
   if (addedCount) {
+    persistWorkingConfig();
     toast(`成功添加 ${addedCount} 个节点`);
     el('linkInput').value = '';
     container.innerHTML = '';
@@ -1295,6 +1381,7 @@ function moveProxy(idx, delta) {
   if (next < 0 || next >= AppState.proxies.length) return;
   const arr = AppState.proxies;
   [arr[idx], arr[next]] = [arr[next], arr[idx]];
+  persistWorkingConfig();
   renderProxyCards();
 }
 
@@ -1520,6 +1607,7 @@ function saveProxy() {
     if (isEdit && oldName !== name) g.proxies = g.proxies.filter(n => n !== oldName);
   });
 
+  persistWorkingConfig();
   if (name !== val('f_name')) toast(`名称重复，已自动保存为：${name}`,'info');
   else toast(isEdit ? '节点已更新' : '节点已添加');
   cancelForm();
@@ -1547,6 +1635,7 @@ function deleteProxy(idx) {
     });
     if (AppState.editingIndex === idx) cancelForm();
     else if (AppState.editingIndex > idx) AppState.editingIndex--;
+    persistWorkingConfig();
     toast('节点已删除');
     renderAll();
   });
@@ -1554,6 +1643,7 @@ function deleteProxy(idx) {
 
 function sortProxiesByName() {
   AppState.proxies.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'zh-Hans-CN'));
+  persistWorkingConfig();
   toast('已按名称排序');
   renderProxyCards();
 }
@@ -1581,6 +1671,7 @@ function bulkRenameVisibleProxies() {
       changed++;
     }
   });
+  persistWorkingConfig();
   toast(`已批量重命名 ${changed} 个节点`);
   renderAll();
 }
@@ -1641,6 +1732,7 @@ function collapseAllGroups() {
 function removeMember(gi, name) {
   const g = AppState.proxyGroups[gi];
   if (g.proxies) g.proxies = g.proxies.filter(n => n !== name);
+  persistWorkingConfig();
   renderProxyGroups();
   el('groupBody_' + gi).classList.add('show');
   el('arrow_' + gi).classList.add('open');
@@ -1652,6 +1744,7 @@ function addMember(gi) {
   const g = AppState.proxyGroups[gi];
   if (!g.proxies) g.proxies = [];
   if (!g.proxies.includes(name)) g.proxies.push(name);
+  persistWorkingConfig();
   renderProxyGroups();
   el('groupBody_' + gi).classList.add('show');
   el('arrow_' + gi).classList.add('open');
@@ -1661,6 +1754,7 @@ function deleteGroup(gi) {
   showModal('删除代理组', `确定要删除代理组 "${escHtml(name)}" 吗？将从其他组中移除对它的引用。`, () => {
     AppState.proxyGroups.splice(gi, 1);
     AppState.proxyGroups.forEach(g => { if (g.proxies) g.proxies = g.proxies.filter(n => n !== name); });
+    persistWorkingConfig();
     toast('代理组已删除');
     renderAll();
   });
@@ -1704,6 +1798,7 @@ function createGroupFromDialog() {
       parent.proxies.push(name);
     }
   }
+  persistWorkingConfig();
   closeModal();
   toast('代理组已创建');
   renderAll();
@@ -1805,6 +1900,7 @@ function addAirport() {
   el('airportName').value = '';
   el('airportInterval').value = '86400';
   el('airportHealthInterval').value = '300';
+  persistWorkingConfig();
   toast('订阅源已添加');
   renderAll();
 }
@@ -1817,6 +1913,7 @@ function toggleProviderUse(providerName, gi, checked) {
     g.use = g.use.filter(n => n !== providerName);
     if (!g.use.length) delete g.use;
   }
+  persistWorkingConfig();
   renderProxyGroups();
 }
 function editProvider(name) {
@@ -1862,6 +1959,7 @@ function saveProvider(oldName) {
     });
   }
   AppState.proxyProviders[newName] = provider;
+  persistWorkingConfig();
   closeModal();
   toast('订阅源已更新');
   renderAll();
@@ -1875,6 +1973,7 @@ function deleteProvider(name) {
         if (!g.use.length) delete g.use;
       }
     });
+    persistWorkingConfig();
     toast('订阅源已删除');
     renderAll();
   });
@@ -1936,6 +2035,11 @@ document.addEventListener('click', function(e) {
   const groupsList = el('proxyGroupsList');
   if (!groupsList || groupsList.contains(e.target)) return;
   collapseAllGroups();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  ensureAuth();
+  restoreWorkingConfig();
 });
 </script>
 </body>
