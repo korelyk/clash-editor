@@ -608,6 +608,10 @@ textarea { resize:vertical; }
         </div>
         <div class="toolbar-right">
           <span class="stats-chip">当前视图 <strong id="visibleProxyCount">0</strong> 个节点</span>
+          <select id="draftSelect" onchange="switchDraft(this.value)" style="width:auto;min-width:150px"></select>
+          <button class="btn btn-outline" onclick="saveCurrentAsDraft()">保存草稿</button>
+          <button class="btn btn-outline" onclick="clearAllLocalData()">清空缓存</button>
+          <button class="btn btn-outline" onclick="showPasswordDialog()">修改密码</button>
           <button class="btn btn-outline" onclick="resetFilters()">重置筛选</button>
         </div>
       </div>
@@ -756,9 +760,12 @@ textarea { resize:vertical; }
 const STORAGE_KEYS = {
   auth: 'clash-editor-auth-ok',
   workingConfig: 'clash-editor-working-config-v1',
-  rawImport: 'clash-editor-raw-import-v1'
+  rawImport: 'clash-editor-raw-import-v1',
+  password: 'clash-editor-password-v1',
+  drafts: 'clash-editor-drafts-v1',
+  activeDraft: 'clash-editor-active-draft-v1'
 };
-const APP_PASSWORD = 'yjd999999';
+const DEFAULT_PASSWORD = 'yjd999999';
 
 const AppState = {
   rawConfig: null,
@@ -783,11 +790,15 @@ function toast(msg, type='success') {
   }, 2500);
 }
 
+function getCurrentPassword() {
+  return localStorage.getItem(STORAGE_KEYS.password) || DEFAULT_PASSWORD;
+}
+
 function unlockEditor() {
   const input = el('authPasswordInput');
   const hint = el('authHint');
   if (!input) return;
-  if (input.value !== APP_PASSWORD) {
+  if (input.value !== getCurrentPassword()) {
     if (hint) hint.textContent = '密码不对';
     return;
   }
@@ -805,24 +816,63 @@ function ensureAuth() {
   el('authOverlay').style.display = 'flex';
 }
 
+function getWorkingPayload() {
+  return {
+    rawConfig: AppState.rawConfig,
+    rawImportText: AppState.rawImportText,
+    proxies: AppState.proxies,
+    proxyGroups: AppState.proxyGroups,
+    proxyProviders: AppState.proxyProviders
+  };
+}
+
+function applyWorkingPayload(parsed, show = true) {
+  AppState.rawConfig = parsed.rawConfig || {};
+  AppState.rawImportText = parsed.rawImportText || '';
+  AppState.proxies = normalizeImportedProxies(parsed.proxies || []);
+  AppState.proxyGroups = normalizeImportedGroups(parsed.proxyGroups || []);
+  AppState.proxyProviders = normalizeImportedProviders(parsed.proxyProviders || {});
+  const diagnostics = collectImportDiagnostics();
+  AppState.importErrors = diagnostics.errors;
+  AppState.importWarnings = diagnostics.warnings;
+  renderImportDiagnostics();
+  if (AppState.rawImportText && !el('importText').value.trim()) el('importText').value = AppState.rawImportText;
+  if (show) showEditor();
+}
+
+function getDraftMap() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.drafts) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function setDraftMap(map) {
+  localStorage.setItem(STORAGE_KEYS.drafts, JSON.stringify(map));
+}
+
+function renderDraftSelect() {
+  const select = el('draftSelect');
+  if (!select) return;
+  const drafts = getDraftMap();
+  const active = localStorage.getItem(STORAGE_KEYS.activeDraft) || '__working__';
+  let html = '<option value="__working__">当前工作区</option>';
+  Object.keys(drafts).sort().forEach(name => {
+    html += `<option value="${escAttr(name)}" ${active===name?'selected':''}>草稿：${escHtml(name)}</option>`;
+  });
+  select.innerHTML = html;
+}
+
 function restoreWorkingConfig() {
   const savedRaw = localStorage.getItem(STORAGE_KEYS.rawImport);
   const savedConfig = localStorage.getItem(STORAGE_KEYS.workingConfig);
   if (savedRaw && !el('importText').value.trim()) el('importText').value = savedRaw;
+  renderDraftSelect();
   if (!savedConfig) return;
   try {
     const parsed = JSON.parse(savedConfig);
-    AppState.rawConfig = parsed.rawConfig || {};
-    AppState.rawImportText = parsed.rawImportText || '';
-    AppState.proxies = normalizeImportedProxies(parsed.proxies || []);
-    AppState.proxyGroups = normalizeImportedGroups(parsed.proxyGroups || []);
-    AppState.proxyProviders = normalizeImportedProviders(parsed.proxyProviders || {});
-    const diagnostics = collectImportDiagnostics();
-    AppState.importErrors = diagnostics.errors;
-    AppState.importWarnings = diagnostics.warnings;
-    renderImportDiagnostics();
-    if (AppState.rawImportText && !el('importText').value.trim()) el('importText').value = AppState.rawImportText;
-    showEditor();
+    applyWorkingPayload(parsed);
     toast('已自动恢复上次配置', 'info');
   } catch (e) {
     console.warn('restoreWorkingConfig failed', e);
@@ -831,18 +881,84 @@ function restoreWorkingConfig() {
 
 function persistWorkingConfig() {
   try {
-    const payload = {
-      rawConfig: AppState.rawConfig,
-      rawImportText: AppState.rawImportText,
-      proxies: AppState.proxies,
-      proxyGroups: AppState.proxyGroups,
-      proxyProviders: AppState.proxyProviders
-    };
+    const payload = getWorkingPayload();
     localStorage.setItem(STORAGE_KEYS.workingConfig, JSON.stringify(payload));
     if (AppState.rawImportText) localStorage.setItem(STORAGE_KEYS.rawImport, AppState.rawImportText);
   } catch (e) {
     console.warn('persistWorkingConfig failed', e);
   }
+}
+
+function saveCurrentAsDraft() {
+  const name = prompt('输入草稿名');
+  if (!name) return;
+  const draftName = name.trim();
+  if (!draftName) return;
+  const drafts = getDraftMap();
+  drafts[draftName] = getWorkingPayload();
+  setDraftMap(drafts);
+  localStorage.setItem(STORAGE_KEYS.activeDraft, draftName);
+  renderDraftSelect();
+  toast(`草稿已保存：${draftName}`);
+}
+
+function switchDraft(name) {
+  localStorage.setItem(STORAGE_KEYS.activeDraft, name);
+  if (name === '__working__') {
+    const saved = localStorage.getItem(STORAGE_KEYS.workingConfig);
+    if (saved) {
+      applyWorkingPayload(JSON.parse(saved));
+      renderAll();
+      runHealthCheck(false);
+      toast('已切回当前工作区', 'info');
+    }
+    return;
+  }
+  const drafts = getDraftMap();
+  if (!drafts[name]) {
+    toast('草稿不存在', 'error');
+    renderDraftSelect();
+    return;
+  }
+  applyWorkingPayload(drafts[name]);
+  renderAll();
+  runHealthCheck(false);
+  toast(`已切换到草稿：${name}`, 'info');
+}
+
+function clearAllLocalData() {
+  showModal('清空本地缓存', '这会删除当前浏览器保存的密码登录态、自动保存配置和所有草稿，确定继续吗？', () => {
+    Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+    location.reload();
+  });
+}
+
+function showPasswordDialog() {
+  const c = el('modalContainer');
+  c.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <h3>修改页面密码</h3>
+      <div class="form-group"><label>当前密码</label><input id="pwd_old" type="password"></div>
+      <div class="form-group"><label>新密码</label><input id="pwd_new" type="password"></div>
+      <div class="form-group"><label>确认新密码</label><input id="pwd_new2" type="password"></div>
+      <div class="btn-group" style="justify-content:flex-end;margin-top:16px;">
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="changePassword()">保存</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function changePassword() {
+  const oldPwd = val('pwd_old');
+  const newPwd = val('pwd_new');
+  const newPwd2 = val('pwd_new2');
+  if (oldPwd !== getCurrentPassword()) { toast('当前密码不对', 'error'); return; }
+  if (!newPwd || newPwd.length < 6) { toast('新密码至少 6 位', 'error'); return; }
+  if (newPwd !== newPwd2) { toast('两次新密码不一致', 'error'); return; }
+  localStorage.setItem(STORAGE_KEYS.password, newPwd);
+  closeModal();
+  toast('密码已更新');
 }
 
 function showModal(title, message, onConfirm) {
@@ -2040,6 +2156,7 @@ document.addEventListener('click', function(e) {
 document.addEventListener('DOMContentLoaded', () => {
   ensureAuth();
   restoreWorkingConfig();
+  renderDraftSelect();
 });
 </script>
 </body>
